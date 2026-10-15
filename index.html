@@ -129,6 +129,9 @@ const frame = $('frame'), photo = $('photo'), status = $('status'),
       btn = $('refreshBtn'), credit = $('credit'),
       seedInput = $('seed'), micBtn = $('micBtn'), voiceHint = $('voiceHint');
 const SEED_KEY = 'ga_seed_word';
+const SEEN_KEY = 'ga_seen_flickr';   // FIFO of shown Flickr photo links
+const DECK_KEY = 'ga_picsum_deck';   // shuffled Picsum id deck
+const DECKIDX_KEY = 'ga_picsum_idx';
 
 // Restore the last-used seed word.
 try { seedInput.value = localStorage.getItem(SEED_KEY) || ''; } catch (e) {}
@@ -141,6 +144,53 @@ function statusSpinner() {
 }
 function statusText(msg) { status.textContent = msg; }
 
+// ── Never-repeat plumbing ───────────────────────────────────────
+function getSeen() {
+  try { return JSON.parse(localStorage.getItem(SEEN_KEY)) || []; }
+  catch (e) { return []; }
+}
+function markSeen(id) {
+  let s = getSeen().filter(x => x !== id);
+  s.push(id);
+  if (s.length > 1000) s = s.slice(s.length - 1000);
+  try { localStorage.setItem(SEEN_KEY, JSON.stringify(s)); } catch (e) {}
+}
+// A shuffled deck of ~1000 Picsum ids; bad ids are skipped on 404.
+// Reshuffles only after every card has been shown once.
+function shuffledDeck() {
+  const ids = [];
+  for (let i = 0; i <= 1083; i++) ids.push(i);
+  for (let i = ids.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    const t = ids[i]; ids[i] = ids[j]; ids[j] = t;
+  }
+  return ids;
+}
+function getDeck() {
+  try {
+    const d = JSON.parse(localStorage.getItem(DECK_KEY));
+    const idx = parseInt(localStorage.getItem(DECKIDX_KEY) || '0', 10);
+    if (Array.isArray(d) && d.length && idx < d.length) return { deck: d, idx };
+  } catch (e) {}
+  const deck = shuffledDeck();
+  try {
+    localStorage.setItem(DECK_KEY, JSON.stringify(deck));
+    localStorage.setItem(DECKIDX_KEY, '0');
+  } catch (e) {}
+  return { deck, idx: 0 };
+}
+function nextDeckId() {
+  let { deck, idx } = getDeck();
+  if (idx >= deck.length) {
+    deck = shuffledDeck(); idx = 0;
+    try { localStorage.setItem(DECK_KEY, JSON.stringify(deck)); } catch (e) {}
+  }
+  const id = deck[idx];
+  try { localStorage.setItem(DECKIDX_KEY, String(idx + 1)); } catch (e) {}
+  return id;
+}
+
+// ── Photo sources ──────────────────────────────────────────────
 // Flickr public feed via JSONP (no API key, no CORS issue).
 function flickrFeed(seed) {
   return new Promise((resolve, reject) => {
@@ -161,7 +211,37 @@ function flickrFeed(seed) {
   });
 }
 
-// Prefer the large version, fall back to smaller ones.
+// Seeded draw: random pick from the feed, skipping anything already shown.
+async function drawSeeded(seed) {
+  const items = await flickrFeed(seed);
+  if (!items.length) throw new Error('empty');
+  const seen = getSeen();
+  const fresh = items.filter(it => seen.indexOf(it.link) === -1);
+  const item = fresh.length
+    ? fresh[Math.floor(Math.random() * fresh.length)]
+    : items[Math.floor(Math.random() * items.length)]; // pool exhausted — allow an old one
+  markSeen(item.link);
+  return item;
+}
+
+// Unseeded draw: next card off the shuffled deck (never repeats).
+function drawUnseeded(done) {
+  let attempts = 0;
+  (function tryNext() {
+    if (attempts++ > 25) { // deck trouble — fall back to a random Picsum seed
+      const s = Math.random().toString(36).slice(2, 10) + Date.now().toString(36);
+      done('https://picsum.photos/seed/' + s + '/1200/900', 'Picsum');
+      return;
+    }
+    const url = 'https://picsum.photos/id/' + nextDeckId() + '/1200/900';
+    const probe = new Image();
+    probe.onload = () => done(url, 'Picsum');
+    probe.onerror = () => tryNext(); // bad id — skip the card
+    probe.src = url;
+  })();
+}
+
+// Prefer the large Flickr version, fall back to smaller ones.
 function variants(mUrl) {
   return [mUrl.replace('_m.jpg', '_b.jpg'), mUrl.replace('_m.jpg', '_z.jpg'), mUrl];
 }
@@ -175,32 +255,37 @@ function loadWithFallback(urls, done) {
   probe.src = urls.shift();
 }
 
-async function newPicture() {
+function newPicture() {
   const seed = seedInput.value.trim();
   saveSeed();
   btn.disabled = true;
   frame.classList.remove('ready');
   statusSpinner();
   credit.textContent = '';
-  try {
-    const items = await flickrFeed(seed);
-    if (!items.length) throw new Error('empty');
-    const item = items[Math.floor(Math.random() * items.length)];
-    loadWithFallback(variants(item.media.m), (okUrl) => {
-      btn.disabled = false;
-      if (okUrl) {
-        photo.src = okUrl;
-        frame.classList.add('ready');
-        const title = (item.title || '').trim();
-        credit.textContent = (seed ? 'Seed: ' + seed + ' · ' : '') + 'Flickr'
-          + (title ? ' — ' + title : '');
-      } else {
-        statusText('Could not load a picture. Try again.');
-      }
-    });
-  } catch (e) {
+  const finish = (url, creditText) => {
     btn.disabled = false;
-    statusText('Could not reach the photo feed. Check your connection and try again.');
+    if (url) {
+      photo.src = url;
+      frame.classList.add('ready');
+      credit.textContent = creditText;
+    } else {
+      statusText('Could not load a picture. Try again.');
+    }
+  };
+  if (seed) {
+    drawSeeded(seed).then((item) => {
+      loadWithFallback(variants(item.media.m), (okUrl) => {
+        const title = (item.title || '').trim();
+        finish(okUrl, okUrl
+          ? 'Seed: ' + seed + ' · Flickr' + (title ? ' — ' + title : '')
+          : '');
+      });
+    }).catch(() => {
+      btn.disabled = false;
+      statusText('Could not reach the photo feed. Check your connection and try again.');
+    });
+  } else {
+    drawUnseeded((url, src) => finish(url, src));
   }
 }
 
