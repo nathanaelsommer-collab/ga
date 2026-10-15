@@ -150,7 +150,7 @@ function getSeen() {
 function markSeen(id) {
   let s = getSeen().filter(x => x !== id);
   s.push(id);
-  if (s.length > 1000) s = s.slice(s.length - 1000);
+  if (s.length > 2000) s = s.slice(s.length - 2000);
   try { localStorage.setItem(SEEN_KEY, JSON.stringify(s)); } catch (e) {}
 }
 // ── Photo sources ──────────────────────────────────────────────
@@ -174,17 +174,91 @@ function flickrFeed(seed) {
   });
 }
 
-// Seeded draw: random pick from the feed, skipping anything already shown.
+// ── Broad search: Wikimedia Commons (no key, CORS-open) ────────
+// Tens of thousands of results per seed word, paged 50 at a time.
+function commonsSearch(seed, offset) {
+  const url = 'https://commons.wikimedia.org/w/api.php?action=query&format=json&origin=*'
+    + '&generator=search&gsrnamespace=6&gsrlimit=50'
+    + '&gsrsearch=' + encodeURIComponent(seed + ' filetype:bitmap')
+    + (offset ? '&gsroffset=' + offset : '')
+    + '&prop=imageinfo&iiprop=url&iiurlwidth=1200';
+  return fetch(url).then(r => { if (!r.ok) throw new Error('http'); return r.json(); });
+}
+function seedDeckKey(seed) { return 'ga_wcdeck_' + seed.toLowerCase(); }
+function getSeedDeck(seed) {
+  try {
+    const d = JSON.parse(localStorage.getItem(seedDeckKey(seed)));
+    if (d && Array.isArray(d.ids)) return d;
+  } catch (e) {}
+  return { ids: [], offset: 0, exhausted: false };
+}
+function saveSeedDeck(seed, d) {
+  try { localStorage.setItem(seedDeckKey(seed), JSON.stringify(d)); } catch (e) {}
+}
+function shuffle(a) {
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    const t = a[i]; a[i] = a[j]; a[j] = t;
+  }
+  return a;
+}
+async function refillDeck(seed, deck) {
+  const data = await commonsSearch(seed, deck.offset);
+  const pages = data.query && data.query.pages;
+  const seen = getSeen();
+  const fresh = [];
+  if (pages) for (const pid in pages) {
+    if (seen.indexOf('wc:' + pid) !== -1) continue;
+    const p = pages[pid];
+    const ii = p.imageinfo && p.imageinfo[0];
+    if (ii && ii.thumburl) fresh.push({
+      id: 'wc:' + pid, thumb: ii.thumburl,
+      title: p.title.replace(/^File:/, '').replace(/\.[A-Za-z]+$/, '')
+    });
+  }
+  deck.ids = shuffle(fresh);
+  if (data.continue && data.continue.gsroffset != null) deck.offset = data.continue.gsroffset;
+  else deck.exhausted = true;
+  saveSeedDeck(seed, deck);
+  return deck;
+}
+async function drawCommons(seed) {
+  let deck = getSeedDeck(seed);
+  if (!deck.ids.length) {
+    if (deck.exhausted) {
+      // Seen everything Commons has for this word — start a fresh cycle.
+      try {
+        const kept = getSeen().filter(x => x.indexOf('wc:') !== 0);
+        localStorage.setItem(SEEN_KEY, JSON.stringify(kept));
+      } catch (e) {}
+      deck = { ids: [], offset: 0, exhausted: false };
+    }
+    deck = await refillDeck(seed, deck);
+  }
+  if (!deck.ids.length) throw new Error('noresults');
+  const card = deck.ids.shift();
+  saveSeedDeck(seed, deck);
+  markSeen(card.id);
+  return { srcs: [card.thumb], title: card.title, credit: 'Wikimedia Commons' };
+}
+// Seeded draw: broad Commons search first, Flickr feed as fallback.
 async function drawSeeded(seed) {
+  try { return await drawCommons(seed); }
+  catch (e) {
+    if (e.message === 'noresults') return drawFlickrSeeded(seed);
+    throw e;
+  }
+}
+async function drawFlickrSeeded(seed) {
   const items = await flickrFeed(seed);
-  if (!items.length) throw new Error('empty');
+  if (!items.length) throw new Error('noresults');
   const seen = getSeen();
   const fresh = items.filter(it => seen.indexOf(it.link) === -1);
   const item = fresh.length
     ? fresh[Math.floor(Math.random() * fresh.length)]
-    : items[Math.floor(Math.random() * items.length)]; // pool exhausted — allow an old one
+    : items[Math.floor(Math.random() * items.length)];
   markSeen(item.link);
-  return item;
+  return { srcs: variants(item.media.m), title: (item.title || '').trim(), credit: 'Flickr' };
 }
 
 // Prefer the large Flickr version, fall back to smaller ones.
@@ -215,21 +289,22 @@ function newPicture() {
   frame.classList.remove('ready');
   statusSpinner();
   credit.textContent = '';
-  drawSeeded(seed).then((item) => {
-    loadWithFallback(variants(item.media.m), (okUrl) => {
+  drawSeeded(seed).then((card) => {
+    loadWithFallback(card.srcs.slice(), (okUrl) => {
       btn.disabled = false;
       if (okUrl) {
         photo.src = okUrl;
         frame.classList.add('ready');
-        const title = (item.title || '').trim();
-        credit.textContent = 'Seed: ' + seed + ' · Flickr' + (title ? ' — ' + title : '');
+        credit.textContent = 'Seed: ' + seed + ' · ' + card.credit + (card.title ? ' — ' + card.title : '');
       } else {
         statusText('Could not load a picture. Try again.');
       }
     });
-  }).catch(() => {
+  }).catch((e) => {
     btn.disabled = false;
-    statusText('Could not reach the photo feed. Check your connection and try again.');
+    statusText(e && e.message === 'noresults'
+      ? 'No pictures found for "' + seed + '". Try another word.'
+      : 'Could not reach the photo feed. Check your connection and try again.');
   });
 }
 

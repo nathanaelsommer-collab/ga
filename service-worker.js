@@ -1,6 +1,6 @@
 /* GA service worker — offline-first app shell.
  * Bump CACHE_VERSION to force clients onto a fresh cache. */
-const CACHE_VERSION = "ga-v6";
+const CACHE_VERSION = "ga-v7";
 const ASSETS = ["./", "./index.html", "./manifest.json", "./favicon.svg"];
 
 self.addEventListener("install", (event) => {
