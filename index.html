@@ -215,7 +215,7 @@ const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
 if (!SR) {
   micBtn.style.display = 'none';
 } else {
-  let rec = null, recognizing = false, gotResult = false;
+  let rec = null, recognizing = false, gotResult = false, voiceTimer = null;
   micBtn.addEventListener('click', () => {
     if (recognizing) { try { rec.stop(); } catch (e) {} return; }
     voiceHint.hidden = true;
@@ -227,11 +227,13 @@ if (!SR) {
     micBtn.classList.add('listening');
     rec.onresult = (e) => {
       gotResult = true;
+      if (voiceTimer) { clearTimeout(voiceTimer); voiceTimer = null; }
       const t = e.results[0][0].transcript.trim();
       if (t) { seedInput.value = t; newPicture(); }
     };
     const failed = (msg) => {
       recognizing = false;
+      if (voiceTimer) { clearTimeout(voiceTimer); voiceTimer = null; }
       micBtn.classList.remove('listening');
       voiceHint.textContent = msg;
       voiceHint.hidden = false;
@@ -245,6 +247,14 @@ if (!SR) {
     };
     try { rec.start(); }
     catch (e) { failed("Voice isn't available here — tap the seed field and use your keyboard's mic instead."); }
+    // Safety net: on iPhone the mic sometimes opens and never answers.
+    // Don't hang on red — bail out after 10 seconds with the workaround.
+    voiceTimer = setTimeout(() => {
+      if (recognizing && !gotResult) {
+        try { rec.abort(); } catch (e) {}
+        failed("Voice isn't cooperating on this iPhone — tap the seed field and use your keyboard's mic to dictate instead.");
+      }
+    }, 10000);
   });
 }
 
