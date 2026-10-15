@@ -53,6 +53,10 @@
   }
   button:active{transform:scale(.98);}
   button:disabled{opacity:.55;}
+  .preset{
+    width:100%; margin:0 0 16px; background:transparent; color:var(--accent);
+    border:1px solid var(--accent); font-size:16px; font-weight:700;
+  }
   .row{margin-top:14px;}
   .row button{width:100%;}
   footer{text-align:center;color:var(--dim);font-size:12px;margin-top:22px;line-height:1.6;}
@@ -97,6 +101,9 @@
     <h1>GA</h1>
     <p>generic app</p>
   </header>
+
+  <!-- Arlen Wilson quick seed — top of screen -->
+  <button id="randyBtn" class="preset" type="button">👤 Arlen Wilson</button>
 
   <!-- ═══════════ APP BODY — replace everything in this block ═══════════ -->
   <section class="card" aria-label="Random picture">
@@ -371,6 +378,11 @@ function newPicture() {
 btn.addEventListener('click', newPicture);
 photo.addEventListener('click', newPicture);
 seedInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') newPicture(); });
+// Arlen Wilson preset — fills the seed word and draws immediately.
+$('randyBtn').addEventListener('click', () => {
+  seedInput.value = 'Arlen Wilson';
+  newPicture();
+});
 
 // ── Voice: speak the seed word ─────────────────────────────────
 // Web Speech API. Works in Safari proper; in the installed home-screen
