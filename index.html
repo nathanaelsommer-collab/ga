@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>GA</title>
 <meta name="theme-color" content="#08111e">
-<meta name="description" content="GA — generic app shell. Random picture.">
+<meta name="description" content="GA — random picture with seed word and voice.">
 <link rel="manifest" href="./manifest.json">
 <link rel="icon" type="image/svg+xml" href="./favicon.svg">
 <!--
@@ -21,7 +21,7 @@
 <style>
   :root{
     --bg:#08111e; --card:#0f1d33; --line:#1e3a5f;
-    --text:#e2e8f0; --dim:#8fa3bf; --accent:#38bdf8;
+    --text:#e2e8f0; --dim:#8fa3bf; --accent:#38bdf8; --danger:#f87171;
   }
   *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
   html,body{margin:0;padding:0;}
@@ -39,20 +39,29 @@
     padding:18px; margin-bottom:16px;
   }
   .card h2{margin:0 0 12px;font-size:15px;letter-spacing:1px;text-transform:uppercase;color:var(--dim);}
+  label{display:block;font-size:13px;color:var(--dim);margin:10px 0 4px;}
+  input{
+    width:100%; background:#0a1526; color:var(--text);
+    border:1px solid var(--line); border-radius:10px;
+    font-size:17px; padding:13px 14px; font-family:inherit;
+  }
+  input:focus{outline:none;border-color:var(--accent);}
   button{
-    width:100%; border:none; border-radius:12px; padding:16px;
-    font-size:18px; font-weight:700; font-family:inherit;
+    border:none; border-radius:12px; padding:15px;
+    font-size:17px; font-weight:700; font-family:inherit;
     background:var(--accent); color:#04121f; cursor:pointer;
   }
   button:active{transform:scale(.98);}
   button:disabled{opacity:.55;}
+  .row{margin-top:14px;}
+  .row button{width:100%;}
   footer{text-align:center;color:var(--dim);font-size:12px;margin-top:22px;line-height:1.6;}
 
   /* ── random picture ── */
   .frame{
     position:relative; border-radius:12px; overflow:hidden;
     background:#0a1526; border:1px solid var(--line);
-    aspect-ratio:4/3; margin-bottom:14px;
+    aspect-ratio:4/3; margin-bottom:6px;
   }
   .frame img{
     width:100%; height:100%; object-fit:cover; display:block;
@@ -70,6 +79,15 @@
     animation:spin 0.9s linear infinite;
   }
   @keyframes spin{to{transform:rotate(360deg);}}
+  .seedrow{display:flex;gap:10px;}
+  .seedrow input{flex:1;}
+  #micBtn{
+    flex:0 0 56px; padding:0; font-size:24px; line-height:1;
+    display:flex; align-items:center; justify-content:center;
+  }
+  #micBtn.listening{background:var(--danger);color:#fff;animation:pulse 1.2s ease-in-out infinite;}
+  @keyframes pulse{50%{opacity:.65;}}
+  .hint{margin-top:8px;font-size:13px;color:var(--dim);line-height:1.5;}
   .credit{margin-top:10px;font-size:12px;color:var(--dim);text-align:center;}
 </style>
 </head>
@@ -87,7 +105,16 @@
       <img id="photo" alt="Random picture from the internet">
       <div class="status" id="status"><div class="spin" role="status" aria-label="Loading"></div></div>
     </div>
-    <button id="refreshBtn" type="button">↻ New picture</button>
+    <label for="seed">Seed word</label>
+    <div class="seedrow">
+      <input id="seed" type="text" placeholder="e.g. mountains, dogs…" autocomplete="off"
+             enterkeyhint="go" aria-label="Seed word — narrows the random draw">
+      <button id="micBtn" type="button" aria-label="Speak the seed word">🎙️</button>
+    </div>
+    <div class="hint" id="voiceHint" hidden></div>
+    <div class="row">
+      <button id="refreshBtn" type="button">↻ New picture</button>
+    </div>
     <div class="credit" id="credit"></div>
   </section>
   <!-- ═══════════ END APP BODY ═══════════ -->
@@ -96,43 +123,130 @@
 </div>
 
 <script>
-// ── GA model shell: random picture ─────────────────────────────
+// ── GA model shell: random picture + seed word + voice ──────────
 const $ = id => document.getElementById(id);
-const frame = $('frame'), photo = $('photo'),
-      status = $('status'), btn = $('refreshBtn'), credit = $('credit');
+const frame = $('frame'), photo = $('photo'), status = $('status'),
+      btn = $('refreshBtn'), credit = $('credit'),
+      seedInput = $('seed'), micBtn = $('micBtn'), voiceHint = $('voiceHint');
+const SEED_KEY = 'ga_seed_word';
 
-function statusText(msg) {
-  status.innerHTML = '';
-  status.textContent = msg;
+// Restore the last-used seed word.
+try { seedInput.value = localStorage.getItem(SEED_KEY) || ''; } catch (e) {}
+function saveSeed() {
+  try { localStorage.setItem(SEED_KEY, seedInput.value.trim()); } catch (e) {}
 }
+
 function statusSpinner() {
   status.innerHTML = '<div class="spin" role="status" aria-label="Loading"></div>';
 }
+function statusText(msg) { status.textContent = msg; }
 
-function newPicture() {
-  const seed = Math.random().toString(36).slice(2, 10) + Date.now().toString(36);
-  const url = 'https://picsum.photos/seed/' + seed + '/1200/900';
+// Flickr public feed via JSONP (no API key, no CORS issue).
+function flickrFeed(seed) {
+  return new Promise((resolve, reject) => {
+    const cb = 'flickrCB' + Date.now().toString(36) + Math.floor(Math.random() * 1e6);
+    const s = document.createElement('script');
+    const timer = setTimeout(() => { cleanup(); reject(new Error('timeout')); }, 15000);
+    function cleanup() {
+      try { delete window[cb]; } catch (e) { window[cb] = undefined; }
+      s.remove(); clearTimeout(timer);
+    }
+    window[cb] = (data) => { cleanup(); resolve((data && data.items) || []); };
+    s.onerror = () => { cleanup(); reject(new Error('feed failed')); };
+    const tags = seed.trim().replace(/\s+/g, ',');
+    s.src = 'https://www.flickr.com/services/feeds/photos_public.gne?format=json&jsoncallback=' + cb
+      + (tags ? '&tags=' + encodeURIComponent(tags) : '')
+      + '&_=' + Date.now();
+    document.head.appendChild(s);
+  });
+}
+
+// Prefer the large version, fall back to smaller ones.
+function variants(mUrl) {
+  return [mUrl.replace('_m.jpg', '_b.jpg'), mUrl.replace('_m.jpg', '_z.jpg'), mUrl];
+}
+function loadWithFallback(urls, done) {
+  const probe = new Image();
+  probe.onload = () => done(probe.src);
+  probe.onerror = () => {
+    if (urls.length) loadWithFallback(urls, done);
+    else done(null);
+  };
+  probe.src = urls.shift();
+}
+
+async function newPicture() {
+  const seed = seedInput.value.trim();
+  saveSeed();
   btn.disabled = true;
   frame.classList.remove('ready');
   statusSpinner();
   credit.textContent = '';
-
-  const probe = new Image();
-  probe.onload = () => {
-    photo.src = url;
-    frame.classList.add('ready');
-    credit.textContent = 'Photo: Lorem Picsum';
+  try {
+    const items = await flickrFeed(seed);
+    if (!items.length) throw new Error('empty');
+    const item = items[Math.floor(Math.random() * items.length)];
+    loadWithFallback(variants(item.media.m), (okUrl) => {
+      btn.disabled = false;
+      if (okUrl) {
+        photo.src = okUrl;
+        frame.classList.add('ready');
+        const title = (item.title || '').trim();
+        credit.textContent = (seed ? 'Seed: ' + seed + ' · ' : '') + 'Flickr'
+          + (title ? ' — ' + title : '');
+      } else {
+        statusText('Could not load a picture. Try again.');
+      }
+    });
+  } catch (e) {
     btn.disabled = false;
-  };
-  probe.onerror = () => {
-    statusText('Could not load a picture. Check your connection and try again.');
-    btn.disabled = false;
-  };
-  probe.src = url;
+    statusText('Could not reach the photo feed. Check your connection and try again.');
+  }
 }
 
 btn.addEventListener('click', newPicture);
 photo.addEventListener('click', newPicture);
+seedInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') newPicture(); });
+
+// ── Voice: speak the seed word ─────────────────────────────────
+// Web Speech API. Works in Safari proper; in the installed home-screen
+// app it may be unavailable — then the keyboard's mic is the way.
+const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+if (!SR) {
+  micBtn.style.display = 'none';
+} else {
+  let rec = null, recognizing = false, gotResult = false;
+  micBtn.addEventListener('click', () => {
+    if (recognizing) { try { rec.stop(); } catch (e) {} return; }
+    voiceHint.hidden = true;
+    rec = new SR();
+    rec.lang = 'en-US';
+    rec.interimResults = false;
+    rec.maxAlternatives = 1;
+    recognizing = true; gotResult = false;
+    micBtn.classList.add('listening');
+    rec.onresult = (e) => {
+      gotResult = true;
+      const t = e.results[0][0].transcript.trim();
+      if (t) { seedInput.value = t; newPicture(); }
+    };
+    const failed = (msg) => {
+      recognizing = false;
+      micBtn.classList.remove('listening');
+      voiceHint.textContent = msg;
+      voiceHint.hidden = false;
+    };
+    rec.onerror = () => failed("Voice didn't come through — tap the seed field and use your keyboard's mic to dictate instead.");
+    rec.onend = () => {
+      if (!recognizing) return;
+      recognizing = false;
+      micBtn.classList.remove('listening');
+      if (!gotResult) failed("Didn't catch that — try again, type it, or use your keyboard's mic.");
+    };
+    try { rec.start(); }
+    catch (e) { failed("Voice isn't available here — tap the seed field and use your keyboard's mic instead."); }
+  });
+}
 
 newPicture();
 
