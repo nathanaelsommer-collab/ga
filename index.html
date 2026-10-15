@@ -174,27 +174,93 @@ function flickrFeed(seed) {
   });
 }
 
-// ── Broad search: Wikimedia Commons (no key, CORS-open) ────────
-// Tens of thousands of results per seed word, paged 50 at a time.
-function commonsSearch(seed, offset) {
+// ── Providers: broad public image databases (all keyless) ────
+// Each provider pages through big result sets; per-seed shuffled decks
+// guarantee no repeats until everything has been shown once.
+function deckKey(prefix, seed) { return 'ga_deck_' + prefix + '_' + seed.toLowerCase(); }
+function getDeck(key) {
+  try {
+    const d = JSON.parse(localStorage.getItem(key));
+    if (d && Array.isArray(d.ids)) return d;
+  } catch (e) {}
+  return { ids: [], page: 0, exhausted: false };
+}
+function saveDeck(key, d) {
+  try { localStorage.setItem(key, JSON.stringify(d)); } catch (e) {}
+}
+function resetSeenPrefix(prefix) {
+  try {
+    const kept = getSeen().filter(x => x.indexOf(prefix) !== 0);
+    localStorage.setItem(SEEN_KEY, JSON.stringify(kept));
+  } catch (e) {}
+}
+
+// Wikimedia Commons — tens of thousands of photos per word, paged 50 at a time.
+function searchCommons(seed, page) {
   const url = 'https://commons.wikimedia.org/w/api.php?action=query&format=json&origin=*'
     + '&generator=search&gsrnamespace=6&gsrlimit=50'
     + '&gsrsearch=' + encodeURIComponent(seed + ' filetype:bitmap')
-    + (offset ? '&gsroffset=' + offset : '')
+    + (page ? '&gsroffset=' + page : '')
     + '&prop=imageinfo&iiprop=url&iiurlwidth=1200';
-  return fetch(url).then(r => { if (!r.ok) throw new Error('http'); return r.json(); });
+  return fetch(url).then(r => { if (!r.ok) throw new Error('http'); return r.json(); })
+    .then(data => {
+      const pages = data.query && data.query.pages, cards = [];
+      if (pages) for (const pid in pages) {
+        const p = pages[pid], ii = p.imageinfo && p.imageinfo[0];
+        if (ii && ii.thumburl) cards.push({ id: 'wc:' + pid, srcs: [ii.thumburl],
+          title: p.title.replace(/^File:/, '').replace(/\.[A-Za-z]+$/, '') });
+      }
+      const nx = data.continue && data.continue.gsroffset;
+      return { cards, nextPage: nx != null ? nx : null };
+    });
 }
-function seedDeckKey(seed) { return 'ga_wcdeck_' + seed.toLowerCase(); }
-function getSeedDeck(seed) {
-  try {
-    const d = JSON.parse(localStorage.getItem(seedDeckKey(seed)));
-    if (d && Array.isArray(d.ids)) return d;
-  } catch (e) {}
-  return { ids: [], offset: 0, exhausted: false };
+
+// NASA Image Library — space, earth science, aeronautics.
+function searchNasa(seed, page) {
+  const p = page || 1;
+  const url = 'https://images-api.nasa.gov/search?q=' + encodeURIComponent(seed)
+    + '&media_type=image&page_size=100&page=' + p;
+  return fetch(url).then(r => { if (!r.ok) throw new Error('http'); return r.json(); })
+    .then(data => {
+      const items = (data.collection && data.collection.items) || [], cards = [];
+      for (const it of items) {
+        const d = it.data && it.data[0];
+        const href = it.links && it.links[0] && it.links[0].href;
+        if (!d || !d.nasa_id || !href) continue;
+        cards.push({ id: 'nasa:' + d.nasa_id,
+          srcs: [href.replace('~thumb.jpg', '~medium.jpg'), href],
+          title: (d.title || '').slice(0, 80) });
+      }
+      const md = data.collection && data.collection.metadata;
+      const total = (md && md.total_hits) || 0;
+      return { cards, nextPage: p * 100 < total ? p + 1 : null };
+    });
 }
-function saveSeedDeck(seed, d) {
-  try { localStorage.setItem(seedDeckKey(seed), JSON.stringify(d)); } catch (e) {}
+
+// Library of Congress — historical photos, paged 100 at a time.
+function searchLoc(seed, page) {
+  const p = page || 1;
+  const url = 'https://www.loc.gov/photos/?q=' + encodeURIComponent(seed)
+    + '&fo=json&c=100&sp=' + p;
+  return fetch(url).then(r => { if (!r.ok) throw new Error('http'); return r.json(); })
+    .then(data => {
+      const results = data.results || [], cards = [];
+      for (const r of results) {
+        const img = r.item && r.item.service_medium;
+        if (!img || !r.id) continue;
+        cards.push({ id: 'loc:' + r.id, srcs: [img], title: (r.title || '').slice(0, 80) });
+      }
+      const pg = data.pagination || {};
+      return { cards, nextPage: pg.next ? p + 1 : null };
+    });
 }
+
+const PROVIDERS = {
+  wc:   { credit: 'Wikimedia Commons',   prefix: 'wc:',   search: searchCommons },
+  nasa: { credit: 'NASA',                prefix: 'nasa:', search: searchNasa },
+  loc:  { credit: 'Library of Congress', prefix: 'loc:',  search: searchLoc }
+};
+
 function shuffle(a) {
   for (let i = a.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
@@ -202,53 +268,8 @@ function shuffle(a) {
   }
   return a;
 }
-async function refillDeck(seed, deck) {
-  const data = await commonsSearch(seed, deck.offset);
-  const pages = data.query && data.query.pages;
-  const seen = getSeen();
-  const fresh = [];
-  if (pages) for (const pid in pages) {
-    if (seen.indexOf('wc:' + pid) !== -1) continue;
-    const p = pages[pid];
-    const ii = p.imageinfo && p.imageinfo[0];
-    if (ii && ii.thumburl) fresh.push({
-      id: 'wc:' + pid, thumb: ii.thumburl,
-      title: p.title.replace(/^File:/, '').replace(/\.[A-Za-z]+$/, '')
-    });
-  }
-  deck.ids = shuffle(fresh);
-  if (data.continue && data.continue.gsroffset != null) deck.offset = data.continue.gsroffset;
-  else deck.exhausted = true;
-  saveSeedDeck(seed, deck);
-  return deck;
-}
-async function drawCommons(seed) {
-  let deck = getSeedDeck(seed);
-  if (!deck.ids.length) {
-    if (deck.exhausted) {
-      // Seen everything Commons has for this word — start a fresh cycle.
-      try {
-        const kept = getSeen().filter(x => x.indexOf('wc:') !== 0);
-        localStorage.setItem(SEEN_KEY, JSON.stringify(kept));
-      } catch (e) {}
-      deck = { ids: [], offset: 0, exhausted: false };
-    }
-    deck = await refillDeck(seed, deck);
-  }
-  if (!deck.ids.length) throw new Error('noresults');
-  const card = deck.ids.shift();
-  saveSeedDeck(seed, deck);
-  markSeen(card.id);
-  return { srcs: [card.thumb], title: card.title, credit: 'Wikimedia Commons' };
-}
-// Seeded draw: broad Commons search first, Flickr feed as fallback.
-async function drawSeeded(seed) {
-  try { return await drawCommons(seed); }
-  catch (e) {
-    if (e.message === 'noresults') return drawFlickrSeeded(seed);
-    throw e;
-  }
-}
+
+// Flickr public feed — the 20 latest uploads per tag; last resort.
 async function drawFlickrSeeded(seed) {
   const items = await flickrFeed(seed);
   if (!items.length) throw new Error('noresults');
@@ -261,6 +282,45 @@ async function drawFlickrSeeded(seed) {
   return { srcs: variants(item.media.m), title: (item.title || '').trim(), credit: 'Flickr' };
 }
 
+async function drawFrom(name, seed) {
+  const P = PROVIDERS[name];
+  const key = deckKey(name, seed);
+  let deck = getDeck(key);
+  if (!deck.ids.length) {
+    if (deck.exhausted) {
+      // Seen everything this source has for the word — start a fresh cycle.
+      resetSeenPrefix(P.prefix);
+      deck = { ids: [], page: 0, exhausted: false };
+    }
+    const res = await P.search(seed, deck.page);
+    const seen = getSeen();
+    deck.ids = shuffle(res.cards.filter(c => seen.indexOf(c.id) === -1));
+    if (res.nextPage != null) deck.page = res.nextPage; else deck.exhausted = true;
+    saveDeck(key, deck);
+  }
+  if (!deck.ids.length) throw new Error('noresults');
+  const card = deck.ids.shift();
+  saveDeck(key, deck);
+  markSeen(card.id);
+  return { srcs: card.srcs, title: card.title, credit: P.credit };
+}
+
+// Seeded draw: shuffle the source order each draw so pictures come from
+// all over — Commons, NASA, the Library of Congress, then Flickr's feed.
+async function drawSeeded(seed) {
+  const order = shuffle(['wc', 'nasa', 'loc', 'flickr']);
+  let sawHttp = false;
+  for (const name of order) {
+    try {
+      if (name === 'flickr') return await drawFlickrSeeded(seed);
+      return await drawFrom(name, seed);
+    } catch (e) {
+      if (e && e.message === 'noresults') continue;
+      sawHttp = true;
+    }
+  }
+  throw new Error(sawHttp ? 'http' : 'noresults');
+}
 // Prefer the large Flickr version, fall back to smaller ones.
 function variants(mUrl) {
   return [mUrl.replace('_m.jpg', '_b.jpg'), mUrl.replace('_m.jpg', '_z.jpg'), mUrl];
