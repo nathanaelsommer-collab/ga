@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <rect width="512" height="512" rx="112" fill="#08111e"/>
+  <rect x="28" y="28" width="456" height="456" rx="92" fill="none" stroke="#38bdf8" stroke-width="16"/>
+  <text x="256" y="332" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="200" font-weight="700" fill="#e2e8f0" text-anchor="middle" letter-spacing="8">GA</text>
+</svg>
