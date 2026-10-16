@@ -55,6 +55,7 @@
   button:disabled{opacity:.55;}
   .row{margin-top:14px;}
   .row button{width:100%;}
+  .ghost{background:transparent;color:var(--dim);border:1px solid var(--line);font-weight:400;font-size:14px;padding:11px;}
   footer{text-align:center;color:var(--dim);font-size:12px;margin-top:22px;line-height:1.6;}
 
   /* ── random picture ── */
@@ -116,6 +117,9 @@
       <button id="refreshBtn" type="button">↻ New picture</button>
     </div>
     <div class="credit" id="credit"></div>
+    <div class="row">
+      <button id="clearBtn" class="ghost" type="button">Clear seen pictures</button>
+    </div>
   </section>
   <!-- ═══════════ END APP BODY ═══════════ -->
 
@@ -371,6 +375,35 @@ function newPicture() {
 btn.addEventListener('click', newPicture);
 photo.addEventListener('click', newPicture);
 seedInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') newPicture(); });
+
+// Clear the never-repeat memory: the seen list plus per-seed decks.
+// Two-tap confirm so it can't go off by accident.
+let clearArmed = false, clearTimer = null;
+$('clearBtn').addEventListener('click', () => {
+  const clearBtn = $('clearBtn');
+  if (!clearArmed) {
+    clearArmed = true;
+    clearBtn.textContent = 'Tap again to confirm';
+    clearTimer = setTimeout(() => {
+      clearArmed = false;
+      clearBtn.textContent = 'Clear seen pictures';
+    }, 4000);
+    return;
+  }
+  clearTimeout(clearTimer);
+  clearArmed = false;
+  try {
+    localStorage.removeItem(SEEN_KEY);
+    const gone = [];
+    for (let i = 0; i < localStorage.length; i++) {
+      const k = localStorage.key(i);
+      if (k && k.indexOf('ga_deck_') === 0) gone.push(k);
+    }
+    gone.forEach(k => localStorage.removeItem(k));
+  } catch (e) {}
+  clearBtn.textContent = 'Cleared ✓';
+  setTimeout(() => { clearBtn.textContent = 'Clear seen pictures'; }, 2500);
+});
 
 // ── Voice: speak the seed word ─────────────────────────────────
 // Web Speech API. Works in Safari proper; in the installed home-screen
