@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>GA</title>
 <meta name="theme-color" content="#08111e">
-<meta name="description" content="GA — deer season log.">
+<meta name="description" content="GA — solunar hunting planner.">
 <link rel="manifest" href="./manifest.json">
 <link rel="icon" type="image/svg+xml" href="./favicon.svg">
 <!--
@@ -59,42 +59,25 @@
   footer{text-align:center;color:var(--dim);font-size:12px;margin-top:22px;line-height:1.6;}
   a{color:var(--accent);}
 
-  /* ── deer log ── */
-  .frow{display:flex;gap:10px;}
-  .frow>div{flex:1;min-width:0;}
-  .frow3{display:flex;gap:10px;}
-  .frow3>div{flex:1;min-width:0;}
-  .checkwrap{display:flex;align-items:flex-end;padding-bottom:12px;}
-  .check{display:flex;align-items:center;gap:8px;font-size:16px;color:var(--text);margin:0;}
-  .check input{width:22px;height:22px;accent-color:var(--accent);}
+  /* ── solunar ── */
   .today{font-size:15px;color:var(--dim);margin-bottom:6px;}
   .sun{font-size:14px;color:var(--dim);}
-  .season{font-size:18px;font-weight:700;margin:10px 0 2px;}
-  .dot{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:8px;}
-  .dot.open{background:#4ade80;}
-  .dot.closed{background:var(--danger);}
+  .moonbig{font-size:20px;font-weight:700;margin:10px 0 2px;}
   .sub{font-size:13px;color:var(--dim);margin-top:4px;line-height:1.5;}
-  .banner{
-    border:1px solid var(--danger); background:rgba(248,113,113,.08);
-    border-radius:12px; padding:12px 14px; margin-top:12px;
-    font-size:14px; line-height:1.55;
-  }
-  .banner b{color:var(--danger);}
-  .banner button{
-    margin-top:10px; width:100%; padding:10px; font-size:15px;
-    background:transparent; border:1px solid var(--danger); color:var(--danger);
-  }
-  .hunt{border:1px solid var(--line);border-radius:12px;padding:12px 14px;margin-bottom:10px;font-size:14px;}
-  .hunt .top{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;gap:8px;}
-  .hunt .d{font-weight:700;}
+  .stars{font-size:22px;letter-spacing:3px;color:#fbbf24;margin:8px 0 2px;}
+  .verdict{font-size:15px;font-weight:600;}
+  .feedrow{display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:1px solid var(--line);font-size:15px;gap:10px;}
+  .feedrow:last-child{border-bottom:none;}
+  .tag{font-size:11px;font-weight:700;letter-spacing:1px;padding:3px 9px;border-radius:20px;text-transform:uppercase;white-space:nowrap;}
+  .tag.major{background:#fbbf24;color:#1c1005;}
+  .tag.minor{background:var(--line);color:var(--text);}
+  .when{color:var(--dim);font-size:14px;text-align:right;}
+  .dayrow{display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:1px solid var(--line);font-size:14px;gap:8px;}
+  .dayrow:last-child{border-bottom:none;}
+  .dayrow .d{font-weight:700;white-space:nowrap;}
+  .dayrow .st{color:#fbbf24;letter-spacing:1px;white-space:nowrap;}
+  .dayrow .maj{color:var(--dim);font-size:13px;text-align:right;}
   .badge{background:var(--accent);color:#04121f;border-radius:20px;padding:2px 10px;font-size:12px;font-weight:700;white-space:nowrap;}
-  .del{background:transparent;border:1px solid var(--line);color:var(--dim);padding:6px 12px;font-size:13px;border-radius:8px;font-weight:400;}
-  .hunt .meta{color:var(--dim);font-size:13px;line-height:1.6;}
-  .tgrid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
-  .tstat{background:#0a1526;border:1px solid var(--line);border-radius:12px;padding:12px;text-align:center;}
-  .tstat .n{font-size:28px;font-weight:800;color:var(--accent);}
-  .tstat .l{font-size:11px;color:var(--dim);margin-top:4px;text-transform:uppercase;letter-spacing:1px;}
-  .empty{color:var(--dim);font-size:14px;}
   .hint{margin-top:8px;font-size:13px;color:var(--dim);line-height:1.5;}
 </style>
 </head>
@@ -107,105 +90,49 @@
 
   <!-- ═══════════ APP BODY — replace everything in this block ═══════════ -->
   <section class="card" aria-label="Today">
-    <h2>🦌 Deer season — today</h2>
+    <h2>🌙 Moon &amp; movement — today</h2>
     <div class="today" id="todayLine"></div>
     <div class="sun" id="sunLine"></div>
-    <div class="season" id="seasonLine"></div>
-    <div class="sub" id="seasonSub"></div>
-    <div id="gcBanner"></div>
+    <div class="moonbig" id="moonLine"></div>
+    <div class="sub" id="moonSub"></div>
+    <div class="stars" id="starLine"></div>
+    <div class="verdict" id="verdictLine"></div>
+    <div class="sub" id="bestLine"></div>
   </section>
 
-  <section class="card" aria-label="Zone">
-    <h2>My zone</h2>
-    <select id="zoneSel" aria-label="Alabama deer zone">
-      <option value="A">Zone A</option>
-      <option value="B">Zone B</option>
-      <option value="C">Zone C</option>
-      <option value="D">Zone D</option>
-      <option value="E">Zone E</option>
-      <option value="CMZ">CWD Management Zone</option>
-    </select>
-    <div class="hint">Defaulting to Zone E (Tennessee Valley, incl. Limestone Co.) — tap to change.
-      <a href="https://www.outdooralabama.com/">Verify your zone on Outdoor Alabama</a>.</div>
+  <section class="card" aria-label="Feeding times">
+    <h2>Feeding times today</h2>
+    <div id="feedList"></div>
+    <div class="hint">Major = moon overhead &amp; underfoot. Minor = moonrise &amp; moonset.
+      Deer feed hardest in the two hours around each.</div>
   </section>
 
-  <section class="card" aria-label="Log a hunt">
-    <h2>Log a hunt</h2>
-    <form id="huntForm">
-      <div class="frow">
-        <div><label for="fDate">Date</label><input id="fDate" type="date"></div>
-        <div><label for="fAmpm">Session</label><select id="fAmpm"><option>AM</option><option>PM</option></select></div>
-      </div>
-      <label for="fStand">Stand / location</label>
-      <input id="fStand" type="text" placeholder="e.g. north ridge stand" autocomplete="off">
-      <div class="frow3">
-        <div><label for="fHours">Hours</label><input id="fHours" type="number" min="0" step="0.5" value="3"></div>
-        <div><label for="fBucks">Bucks seen</label><input id="fBucks" type="number" min="0" value="0"></div>
-        <div><label for="fDoes">Does seen</label><input id="fDoes" type="number" min="0" value="0"></div>
-      </div>
-      <div class="frow3">
-        <div><label for="fShots">Shots</label><input id="fShots" type="number" min="0" value="0"></div>
-        <div class="checkwrap"><label class="check"><input id="fHarvest" type="checkbox"> Harvest</label></div>
-        <div></div>
-      </div>
-      <label for="fNotes">Notes</label>
-      <input id="fNotes" type="text" placeholder="wind, temp, sign…" autocomplete="off">
-      <div class="row"><button type="submit">Save hunt</button></div>
-    </form>
+  <section class="card" aria-label="Next 7 days">
+    <h2>Next 7 days</h2>
+    <div id="weekList"></div>
   </section>
 
-  <section class="card" aria-label="Hunt log">
-    <h2>Hunt log</h2>
-    <div id="huntList"></div>
-  </section>
-
-  <section class="card" aria-label="Season totals">
-    <h2>Season totals</h2>
-    <div class="tgrid" id="totals"></div>
+  <section class="card" aria-label="How the stars work">
+    <h2>How the stars work</h2>
+    <div class="hint">Stars blend the moon phase (new &amp; full moons rate highest) with
+      how well the major feeding windows line up with sunrise and sunset.
+      Times are computed for Athens, AL and are approximate — weather and pressure
+      still call the final shot.</div>
   </section>
   <!-- ═══════════ END APP BODY ═══════════ -->
 
   <footer>
-    Report every harvest to Game Check within 48 hours.<br>
-    3 antlered bucks combined, all seasons · 1 per day · one buck needs 4+ points on one side.<br>
-    Bait privilege license required to hunt deer over bait.<br>
-    <a href="https://www.outdooralabama.com/">Outdoor Alabama</a> — verify zones &amp; dates before you hunt.
+    Solunar times for Athens, AL — computed on your phone, works offline.<br>
+    Your deer season log entries are still saved on this phone — just ask to bring the log back anytime.
   </footer>
 </div>
 
 <script>
-// ── GA model shell: deer season log ──────────
+// ── GA model shell: solunar hunting planner ──────────
 const $ = id => document.getElementById(id);
-const ZONE_KEY = 'ga_hunt_zone', HUNTS_KEY = 'ga_hunts', GC_KEY = 'ga_gamecheck';
 const LAT = 34.603, LON = -86.973; // Athens, AL
 
-// ── 2026–27 Alabama deer seasons (per Outdoor Alabama digest) ──
-const ZONES = {
-  A:   { arch:{from:'2026-10-15',to:'2027-02-10',sex:'Either sex'},
-         gun:{from:'2026-11-21',to:'2027-02-10',sex:'Either sex'},
-         note:'Muzzleloader Nov 16–20 · Youth gun Nov 13–16' },
-  B:   { arch:{from:'2026-10-15',to:'2027-02-10',sex:'Either sex (bucks-only Oct 15–24)'},
-         gun:{from:'2026-11-21',to:'2027-02-10',sex:'Either sex'},
-         note:'Muzzleloader Nov 16–20 · Youth gun Nov 13–16' },
-  C:   { arch:{from:'2026-10-15',to:'2027-02-10',sex:'Either sex (stalk-only Oct 15–24)'},
-         gun:{from:'2026-11-21',to:'2027-02-10',sex:'Split dates — see digest'},
-         note:'Muzzleloader Nov 16–20 · Youth gun Nov 13–16' },
-  D:   { arch:{from:'2026-10-01',to:'2027-01-15',sex:'Either sex', extra:'Jan 16–27: antlered bucks only'},
-         gun:{from:'2026-11-07',to:'2027-01-27',sex:'Split dates — see digest'},
-         note:'Muzzleloader Nov 2–6 · Youth gun Oct 30–Nov 2' },
-  E:   { arch:{from:'2026-10-01',to:'2027-01-15',sex:'Either sex', extra:'Jan 16–27: antlered bucks only'},
-         gun:{from:'2026-11-07',to:'2027-01-27',sex:'Split dates — see digest'},
-         note:'Muzzleloader Nov 2–6 · Youth gun Oct 30–Nov 2' },
-  CMZ: { arch:{from:'2026-10-15',to:'2027-02-10',sex:'Either sex'},
-         gun:{from:'2026-11-21',to:'2027-02-10',sex:'Either sex'},
-         note:'CWD sampling rules apply — see digest' },
-};
-const ZONE_LABEL = { A:'Zone A', B:'Zone B', C:'Zone C', D:'Zone D', E:'Zone E', CMZ:'CWD Mgmt Zone' };
-
 // ── Date helpers (local, no timezone traps) ──
-function parseD(s){ const p=s.split('-'); return new Date(+p[0], +p[1]-1, +p[2]); }
-function dayStamp(d){ return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
-function inRange(d,a,b){ const t=new Date(d.getFullYear(),d.getMonth(),d.getDate()); return t>=parseD(a)&&t<=parseD(b); }
 const MONTHS=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 const DAYS=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
 function fmtShort(d){ return MONTHS[d.getMonth()]+' '+d.getDate(); }
@@ -215,30 +142,6 @@ function fmtTime(d){
   const ap=h>=12?'PM':'AM'; h=h%12||12; return h+':'+m+' '+ap;
 }
 function esc(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
-// Whole calendar days between two local dates (DST-safe).
-function dayDiff(a,b){
-  return Math.round((Date.UTC(b.getFullYear(),b.getMonth(),b.getDate())-
-                     Date.UTC(a.getFullYear(),a.getMonth(),a.getDate()))/86400000);
-}
-
-// ── Season status: what's open right now, or what opens next ──
-function seasonStatus(zone, today){
-  const z = ZONES[zone]; if(!z) return {kind:'closed', label:'Pick a zone', detail:''};
-  const t = new Date(today.getFullYear(), today.getMonth(), today.getDate());
-  if (inRange(t, z.gun.from, z.gun.to))
-    return {kind:'gun', label:'Gun season is OPEN', detail:z.gun.sex+' · '+ZONE_LABEL[zone]};
-  if (inRange(t, z.arch.from, z.arch.to)) {
-    const gd = parseD(z.gun.from);
-    const days = dayDiff(t, gd);
-    return {kind:'archery', label:'Bow season is OPEN', detail:z.arch.sex+' · '+ZONE_LABEL[zone],
-            next:'Gun opens in '+days+'d ('+fmtShort(gd)+')'};
-  }
-  const cands=[{n:'Archery',d:parseD(z.arch.from)},{n:'Gun',d:parseD(z.gun.from)}]
-    .filter(c=>c.d>t).sort((a,b)=>a.d-b.d);
-  if(!cands.length) return {kind:'closed', label:'Season is closed', detail:ZONE_LABEL[zone]+' — see you next fall.'};
-  const days=dayDiff(t, cands[0].d);
-  return {kind:'closed', label:cands[0].n+' opens in '+days+'d', detail:fmtShort(cands[0].d)+' · '+ZONE_LABEL[zone]};
-}
 
 // ── Sunrise / sunset (NOAA solar algorithm, no network needed) ──
 function sunTimes(date){
@@ -271,115 +174,143 @@ function sunTimes(date){
   };
 }
 
-// ── Storage ──
-function load(key, fb){ try{ const v=JSON.parse(localStorage.getItem(key)); return v==null?fb:v; }catch(e){ return fb; } }
-function save(key, v){ try{ localStorage.setItem(key, JSON.stringify(v)); }catch(e){} }
-function getZone(){ return load(ZONE_KEY,'E'); }
+// ── Moon age / phase (anchored on the Oct 10 2026 new moon; re-anchor yearly) ──
+const SYNODIC = 29.53058867;
+const NEW_MOON_REF = Date.UTC(2026, 9, 10, 15, 50); // Oct 10 2026 15:50 UTC
+function moonAge(date){
+  const noonUTC = Date.UTC(date.getFullYear(), date.getMonth(), date.getDate(), 12);
+  const days = (noonUTC - NEW_MOON_REF) / 86400000;
+  return ((days % SYNODIC) + SYNODIC) % SYNODIC;
+}
+function illumination(age){ return (1 - Math.cos(2 * Math.PI * age / SYNODIC)) / 2; }
+const PHASES = ['New Moon','Waxing Crescent','First Quarter','Waxing Gibbous','Full Moon','Waning Gibbous','Last Quarter','Waning Crescent'];
+const MOONS  = ['🌑','🌒','🌓','🌔','🌕','🌖','🌗','🌘'];
+function phaseIndex(age){ return Math.floor((age / SYNODIC) * 8 + 0.5) % 8; }
+
+// ── Solunar day: feeding windows + rating ──
+const LUNAR_HALF = 12.42 * 3600000; // half lunar day (upper/lower transit spacing)
+const LUNAR_DAY = 24.84 * 3600000;  // full lunar day (moonrise-to-moonrise)
+const PERIOD_SPAN = 3600000;        // ±1h around each peak
+function solunarDay(date){
+  const s = sunTimes(date);
+  const age = moonAge(date);
+  const pi = phaseIndex(age);
+  const dayStart = new Date(date.getFullYear(), date.getMonth(), date.getDate()).getTime();
+  const dayEnd = dayStart + 86400000;
+  const solarNoon = (s.rise.getTime() + s.set.getTime()) / 2;
+  // Signed age: near-new-moon days straddle 0/29.53, so fold to [-14.77, +14.77]
+  // for the daily 50.47-minute moon lag (avoids a spurious ~24h jump).
+  const signedAge = age > SYNODIC / 2 ? age - SYNODIC : age;
+  const shift = signedAge * 50.47 * 60000; // moon lags the sun ~50.47 min/day
+  const transit = solarNoon + shift;
+  const mrise = s.rise.getTime() + shift;
+  const mset = s.set.getTime() + shift;
+  function collect(seed, step){
+    const out = [];
+    for (let k = -2; k <= 2; k++) {
+      const t = seed + k * step;
+      if (t >= dayStart && t < dayEnd) out.push(t);
+    }
+    return out.sort((a,b)=>a-b).filter((t,i,a)=> i===0 || t - a[i-1] > 3600000);
+  }
+  const majors = collect(transit, LUNAR_HALF);
+  // Minors: each day's own moonrise + moonset (24.84h cycles), with ±1 day spill.
+  const minors = collect(mrise, LUNAR_DAY).concat(collect(mset, LUNAR_DAY))
+    .sort((a,b)=>a-b).filter((t,i,a)=> i===0 || t - a[i-1] > 3600000);
+  const stars = dayRating(age, majors, minors, s);
+  return {
+    date, sun: s, age,
+    illum: Math.round(illumination(age) * 100),
+    phase: PHASES[pi], emoji: MOONS[pi],
+    majors, minors, stars,
+  };
+}
+function dayRating(age, majors, minors, s){
+  const d = Math.min(age, Math.abs(age - SYNODIC / 2), SYNODIC - age);
+  let score = d <= 2 ? 3.0 : d <= 4 ? 2.25 : d <= 6 ? 1.5 : 0.75;
+  const primes = [
+    [s.rise.getTime() - 1800000, s.rise.getTime() + 7200000],
+    [s.set.getTime() - 7200000, s.set.getTime() + 1800000],
+  ];
+  const inPrime = c => primes.some(w => c + PERIOD_SPAN >= w[0] && c - PERIOD_SPAN <= w[1]);
+  const hits = majors.filter(inPrime).length;
+  score += Math.min(hits, 2) * 1.0;
+  if (!hits && minors.some(inPrime)) score += 0.5;
+  return Math.max(1, Math.min(5, Math.round(score)));
+}
+function fmtRange(center){
+  return fmtTime(new Date(center - PERIOD_SPAN)) + '–' + fmtTime(new Date(center + PERIOD_SPAN));
+}
+function starStr(n){ return '★'.repeat(n) + '☆'.repeat(5 - n); }
+const VERDICTS = {
+  5: 'Prime day — plan to be in the stand.',
+  4: 'Strong day — worth the sit.',
+  3: 'Fair — hunt the major windows.',
+  2: 'Slow — catch a major if you can.',
+  1: 'Quiet day — scout or rest.',
+};
+function bestWindow(sd){
+  const s = sd.sun;
+  const am = [s.rise.getTime() - 1800000, s.rise.getTime() + 7200000];
+  const pm = [s.set.getTime() - 7200000, s.set.getTime() + 1800000];
+  const inWin = (c, w) => c + PERIOD_SPAN >= w[0] && c - PERIOD_SPAN <= w[1];
+  const maj = sd.majors.find(c => inWin(c, am) || inWin(c, pm));
+  if (maj) {
+    const when = inWin(maj, am) ? 'morning' : 'evening';
+    return 'Best sit: ' + when + ' major, ' + fmtRange(maj) + '.';
+  }
+  const min = sd.minors.find(c => inWin(c, am) || inWin(c, pm));
+  if (min) {
+    const when = inWin(min, am) ? 'morning' : 'evening';
+    return 'Best sit: ' + when + ' minor, ' + fmtRange(min) + '.';
+  }
+  const c = sd.majors.length ? sd.majors[0] : sd.minors[0];
+  return c ? 'Best window: ' + fmtRange(c) + '.' : '';
+}
 
 // ── Rendering ──
 function renderToday(){
-  const now=new Date(), zone=getZone();
-  $('todayLine').textContent=fmtLong(now)+' · '+ZONE_LABEL[zone];
-  const s=sunTimes(now);
-  $('sunLine').textContent='Sunrise '+fmtTime(s.rise)+' · Sunset '+fmtTime(s.set)+' · Athens, AL';
-  const st=seasonStatus(zone,now);
-  $('seasonLine').innerHTML='<span class="dot '+(st.kind==='closed'?'closed':'open')+'"></span>'+esc(st.label);
-  let sub=esc(st.detail||'');
-  if(st.next) sub+='<br>'+esc(st.next);
-  const z=ZONES[zone];
-  if(z&&z.note) sub+='<br>'+esc(z.note);
-  $('seasonSub').innerHTML=sub;
-}
-function leftStr(ms){
-  if(ms<=0) return 'OVERDUE — report it now';
-  const h=Math.floor(ms/3600000), m=Math.round((ms%3600000)/60000);
-  return h+'h '+m+'m left';
-}
-function renderBanner(){
-  const list=load(GC_KEY,[]).filter(g=>!g.done);
-  if(!list.length){ $('gcBanner').innerHTML=''; return; }
-  $('gcBanner').innerHTML=list.map(g=>{
-    const due=new Date(g.due);
-    return '<div class="banner" data-gc="'+g.id+'"><b>🦌 Harvest logged '+esc(g.dateStr)+
-      '</b> — report to Game Check by '+esc(fmtShort(due)+', '+fmtTime(due))+
-      '<br>'+esc(leftStr(g.due-Date.now()))+
-      '<br><button type="button" data-done="'+g.id+'">Mark reported</button></div>';
-  }).join('');
-  const btns=Array.prototype.slice.call(document.querySelectorAll('#gcBanner [data-done]'));
-  btns.forEach(b=>b.addEventListener('click',()=>{
-    const all=load(GC_KEY,[]);
-    const g=all.find(x=>x.id===b.getAttribute('data-done'));
-    if(g){ g.done=true; save(GC_KEY,all); }
-    renderBanner();
-  }));
-}
-function renderList(){
-  const hunts=load(HUNTS_KEY,[]).slice().sort((a,b)=>b.date.localeCompare(a.date));
-  if(!hunts.length){ $('huntList').innerHTML='<div class="empty">No hunts logged yet.</div>'; return; }
-  $('huntList').innerHTML=hunts.map(h=>{
-    const seen=(+h.bucks||0)+(+h.does||0);
-    return '<div class="hunt"><div class="top"><span class="d">'+esc(fmtShort(parseD(h.date)))+
-      ' · '+esc(h.ampm)+'</span>'+
-      (h.harvest?'<span class="badge">Harvest</span>':'')+
-      '<button type="button" class="del" data-del="'+h.id+'">Delete</button></div>'+
-      '<div class="meta">'+
-      (h.stand?'📍 '+esc(h.stand)+'<br>':'')+
-      'Seen: '+seen+' ('+(+h.bucks||0)+' buck / '+(+h.does||0)+' doe)'+
-      ' · Hours: '+esc(h.hours||'—')+' · Shots: '+(+h.shots||0)+
-      (h.notes?'<br>📝 '+esc(h.notes):'')+
-      '</div></div>';
-  }).join('');
-  Array.prototype.slice.call(document.querySelectorAll('#huntList [data-del]')).forEach(b=>
-    b.addEventListener('click',()=>{
-      if(!confirm('Delete this hunt?')) return;
-      save(HUNTS_KEY, load(HUNTS_KEY,[]).filter(h=>h.id!==b.getAttribute('data-del')));
-      renderList(); renderTotals();
-    }));
-}
-function renderTotals(){
-  const hunts=load(HUNTS_KEY,[]);
-  const deer=hunts.reduce((n,h)=>n+(+h.bucks||0)+(+h.does||0),0);
-  const bucks=hunts.reduce((n,h)=>n+(+h.bucks||0),0);
-  const harv=hunts.filter(h=>h.harvest).length;
-  const hrs=hunts.reduce((n,h)=>n+(+h.hours||0),0);
-  $('totals').innerHTML=
-    stat(hunts.length,'Hunts')+stat(deer,'Deer seen')+stat(bucks,'Bucks seen')+stat(harv,'Harvests');
-  function stat(n,l){ return '<div class="tstat"><div class="n">'+n+'</div><div class="l">'+l+'</div></div>'; }
-}
-function renderAll(){ renderToday(); renderBanner(); renderList(); renderTotals(); }
+  const now = new Date();
+  const sd = solunarDay(now);
+  $('todayLine').textContent = fmtLong(now);
+  $('sunLine').textContent = 'Sunrise ' + fmtTime(sd.sun.rise) + ' · Sunset ' + fmtTime(sd.sun.set) + ' · Athens, AL';
+  $('moonLine').textContent = sd.emoji + ' ' + sd.phase;
+  $('moonSub').textContent = sd.illum + '% lit · moon age ' + sd.age.toFixed(1) + ' days';
+  $('starLine').textContent = starStr(sd.stars);
+  $('verdictLine').textContent = VERDICTS[sd.stars];
+  $('bestLine').textContent = bestWindow(sd);
 
-// ── Form ──
-function initForm(){
-  $('fDate').value=dayStamp(new Date());
-  $('huntForm').addEventListener('submit',(e)=>{
-    e.preventDefault();
-    const date=$('fDate').value;
-    if(!date) return;
-    const hunt={
-      id:'h'+Date.now().toString(36)+Math.floor(Math.random()*1e4),
-      date:date, ampm:$('fAmpm').value, stand:$('fStand').value.trim(),
-      hours:$('fHours').value, bucks:$('fBucks').value, does:$('fDoes').value,
-      shots:$('fShots').value, harvest:$('fHarvest').checked, notes:$('fNotes').value.trim(),
-    };
-    const hunts=load(HUNTS_KEY,[]); hunts.push(hunt); save(HUNTS_KEY,hunts);
-    if(hunt.harvest){
-      const gc=load(GC_KEY,[]);
-      gc.push({id:'g'+Date.now().toString(36), huntId:hunt.id,
-               dateStr:fmtShort(parseD(date)), due:Date.now()+48*3600000, done:false});
-      save(GC_KEY,gc);
-    }
-    $('fStand').value=''; $('fNotes').value=''; $('fHarvest').checked=false;
-    $('fBucks').value='0'; $('fDoes').value='0'; $('fShots').value='0';
-    renderAll();
-  });
+  $('feedList').innerHTML = sd.majors.map(c =>
+    '<div class="feedrow"><span class="tag major">Major</span><span class="when">' + esc(fmtRange(c)) + '</span></div>'
+  ).join('') + sd.minors.map(c =>
+    '<div class="feedrow"><span class="tag minor">Minor</span><span class="when">' + esc(fmtRange(c)) + '</span></div>'
+  ).join('');
 }
+function renderWeek(){
+  const now = new Date();
+  const days = [];
+  for (let i = 0; i < 7; i++) {
+    const d = new Date(now.getFullYear(), now.getMonth(), now.getDate() + i);
+    days.push(solunarDay(d));
+  }
+  const bestStars = Math.max.apply(null, days.map(d => d.stars));
+  const bestIdx = days.findIndex(d => d.stars === bestStars);
+  $('weekList').innerHTML = days.map((sd, i) => {
+    const d = sd.date;
+    const majors = sd.majors.map(c => fmtTime(new Date(c))).join(' · ') || '—';
+    return '<div class="dayrow">' +
+      '<span class="d">' + esc(DAYS[d.getDay()] + ' ' + fmtShort(d)) + (i === 0 ? ' (today)' : '') + '</span>' +
+      '<span>' + esc(sd.emoji) + '</span>' +
+      '<span class="st">' + esc(starStr(sd.stars)) + '</span>' +
+      '<span class="maj">' + esc(majors) + (i === bestIdx ? ' <span class="badge">Best bet</span>' : '') + '</span>' +
+      '</div>';
+  }).join('');
+}
+function renderAll(){ renderToday(); renderWeek(); }
 
 // ── Init ──
-$('zoneSel').value=getZone();
-$('zoneSel').addEventListener('change',()=>{ save(ZONE_KEY,$('zoneSel').value); renderAll(); });
-initForm();
 renderAll();
-setInterval(()=>{ renderBanner(); },60000);
+setInterval(renderAll, 3600000);
 
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
