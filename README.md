@@ -14,10 +14,15 @@ the shell (PWA wiring, styles) stays as-is.
 
 ## Current function
 
-- **Search**: type a query, hit Search → Google results.
-- **Email**: To defaults to `nathanael.sommer@gmail.com` (changeable; the last-used
-  address is remembered on-device). Subject + message → opens the mail app
-  compose window via `mailto:`.
+- **Daily Schwab report** (ga-v14, Nov 6 2026 — replaced the Moon & Movement
+  planner; backup at `~/workspace/ga-backups/moon-planner-index-2026-11-06.html`).
+  Enter the Schwab account total + TQQQ/TNA/VOO prices from the Schwab app;
+  the app checks flip levels (TQQQ half $60.95 / rest $66.25 / stop $47.70;
+  TNA half $60.49 / rest $65.75 / stop $47.34; VOO is HOLD, no stop), checks
+  the $1M path (required $77,640 by Dec 5, 2026), and builds a plain-text
+  report to copy/share to Beauzo. History is kept on-device in localStorage
+  (`ga_reports`, last 30). Live prices are best-effort (Stooq, then Yahoo);
+  manual entry always works. No brokerage login — GA cannot log into Schwab.
 
 ## Deploy
 

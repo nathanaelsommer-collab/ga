@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>GA</title>
 <meta name="theme-color" content="#08111e">
-<meta name="description" content="GA — solunar hunting planner.">
+<meta name="description" content="GA — daily Schwab report.">
 <link rel="manifest" href="./manifest.json">
 <link rel="icon" type="image/svg+xml" href="./favicon.svg">
 <!--
@@ -59,26 +59,42 @@
   footer{text-align:center;color:var(--dim);font-size:12px;margin-top:22px;line-height:1.6;}
   a{color:var(--accent);}
 
-  /* ── solunar ── */
+  /* ── daily report ── */
   .today{font-size:15px;color:var(--dim);margin-bottom:6px;}
-  .sun{font-size:14px;color:var(--dim);}
-  .moonbig{font-size:20px;font-weight:700;margin:10px 0 2px;}
-  .sub{font-size:13px;color:var(--dim);margin-top:4px;line-height:1.5;}
-  .stars{font-size:22px;letter-spacing:3px;color:#fbbf24;margin:8px 0 2px;}
-  .verdict{font-size:15px;font-weight:600;}
-  .feedrow{display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:1px solid var(--line);font-size:15px;gap:10px;}
-  .feedrow:last-child{border-bottom:none;}
-  .tag{font-size:11px;font-weight:700;letter-spacing:1px;padding:3px 9px;border-radius:20px;text-transform:uppercase;white-space:nowrap;}
-  .tag.major{background:#fbbf24;color:#1c1005;}
-  .tag.minor{background:var(--line);color:var(--text);}
-  .when{color:var(--dim);font-size:14px;text-align:right;}
-  .dayrow{display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:1px solid var(--line);font-size:14px;gap:8px;}
-  .dayrow:last-child{border-bottom:none;}
-  .dayrow .d{font-weight:700;white-space:nowrap;}
-  .dayrow .st{color:#fbbf24;letter-spacing:1px;white-space:nowrap;}
-  .dayrow .maj{color:var(--dim);font-size:13px;text-align:right;}
-  .badge{background:var(--accent);color:#04121f;border-radius:20px;padding:2px 10px;font-size:12px;font-weight:700;white-space:nowrap;}
   .hint{margin-top:8px;font-size:13px;color:var(--dim);line-height:1.5;}
+  .sub{font-size:13px;color:var(--dim);margin-top:4px;line-height:1.5;}
+  textarea{
+    width:100%; background:#0a1526; color:var(--text);
+    border:1px solid var(--line); border-radius:10px;
+    font-size:16px; padding:13px 14px; font-family:inherit; min-height:84px; resize:vertical;
+  }
+  textarea:focus{outline:none;border-color:var(--accent);}
+  input[type="checkbox"]{width:auto;accent-color:var(--accent);margin-right:10px;transform:scale(1.25);}
+  .check{display:flex;align-items:center;font-size:15px;color:var(--text);margin:0;padding:9px 0;border-bottom:1px solid var(--line);cursor:pointer;}
+  .check:last-child{border-bottom:none;}
+  .fliprow{padding:12px 0;border-bottom:1px solid var(--line);font-size:15px;line-height:1.55;}
+  .fliprow:last-child{border-bottom:none;}
+  .fliprow .top{display:flex;justify-content:space-between;align-items:center;gap:10px;}
+  .fliprow .sym{font-weight:700;}
+  .fliprow .lvl{font-size:13px;color:var(--dim);margin-top:2px;}
+  .pill{font-size:11px;font-weight:700;letter-spacing:1px;padding:3px 9px;border-radius:20px;text-transform:uppercase;white-space:nowrap;}
+  .pill.ok{background:var(--line);color:var(--text);}
+  .pill.good{background:#22c55e;color:#04121f;}
+  .pill.warn{background:#fbbf24;color:#1c1005;}
+  .pill.bad{background:var(--danger);color:#1c0505;}
+  pre.report{
+    background:#0a1526;border:1px solid var(--line);border-radius:10px;
+    padding:14px;font-size:14px;line-height:1.6;white-space:pre-wrap;word-wrap:break-word;
+    font-family:ui-monospace,SFMono-Regular,Menlo,monospace;color:var(--text);margin:0;
+  }
+  .btnrow{display:flex;gap:10px;margin-top:14px;}
+  .btnrow button{flex:1;padding:13px 8px;font-size:15px;}
+  .histrow{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:11px 0;border-bottom:1px solid var(--line);font-size:15px;cursor:pointer;}
+  .histrow:last-child{border-bottom:none;}
+  .histrow .d{font-weight:700;}
+  .histrow .v{color:var(--dim);}
+  .big{font-size:20px;font-weight:700;}
+  .muted{color:var(--dim);}
 </style>
 </head>
 <body>
@@ -90,227 +106,390 @@
 
   <!-- ═══════════ APP BODY — replace everything in this block ═══════════ -->
   <section class="card" aria-label="Today">
-    <h2>🌙 Moon &amp; movement — today</h2>
+    <h2>📊 Daily Schwab report</h2>
     <div class="today" id="todayLine"></div>
-    <div class="sun" id="sunLine"></div>
-    <div class="moonbig" id="moonLine"></div>
-    <div class="sub" id="moonSub"></div>
-    <div class="stars" id="starLine"></div>
-    <div class="verdict" id="verdictLine"></div>
-    <div class="sub" id="bestLine"></div>
+    <div class="sub">Schwab ending 2410 · Goal $75,413 → $1M by Apr 15, 2034</div>
+    <label for="totalInput">Account total value ($) — from the Schwab app</label>
+    <input id="totalInput" inputmode="decimal" autocomplete="off" placeholder="e.g. 75824" type="text">
+    <label for="cashInput">Cash ($)</label>
+    <input id="cashInput" inputmode="decimal" autocomplete="off" type="text" value="10099.37">
   </section>
 
-  <section class="card" aria-label="Feeding times">
-    <h2>Feeding times today</h2>
-    <div id="feedList"></div>
-    <div class="hint">Major = moon overhead &amp; underfoot. Minor = moonrise &amp; moonset.
-      Deer feed hardest in the two hours around each.</div>
+  <section class="card" aria-label="Today's numbers">
+    <h2>Today's prices</h2>
+    <label for="tqqqPrice">TQQQ — entry $52.9999</label>
+    <input id="tqqqPrice" inputmode="decimal" autocomplete="off" placeholder="e.g. 52.61" type="text">
+    <label for="tnaPrice">TNA — entry $52.60</label>
+    <input id="tnaPrice" inputmode="decimal" autocomplete="off" placeholder="e.g. 52.78" type="text">
+    <label for="vooPrice">VOO — entry $679.279 (HOLD)</label>
+    <input id="vooPrice" inputmode="decimal" autocomplete="off" placeholder="e.g. 678.78" type="text">
+    <div class="row"><button class="ghost" id="fetchBtn" type="button">Try live prices (Stooq)</button></div>
+    <div class="hint" id="fetchMsg">Optional — tries Stooq, then Yahoo. Type them in from Schwab if this fails.</div>
   </section>
 
-  <section class="card" aria-label="Next 7 days">
-    <h2>Next 7 days</h2>
-    <div id="weekList"></div>
+  <section class="card" aria-label="Flip check">
+    <h2>Flip check</h2>
+    <div id="flipList"></div>
+    <div class="hint">TNA total is 476.97 shares (475 new + 1.97 old). Stops are automatic stop-market, GTC, regular hours only. VOO has no stop and no flip exit.</div>
   </section>
 
-  <section class="card" aria-label="How the stars work">
-    <h2>How the stars work</h2>
-    <div class="hint">Stars blend the moon phase (new &amp; full moons rate highest) with
-      how well the major feeding windows line up with sunrise and sunset.
-      Times are computed for Athens, AL and are approximate — weather and pressure
-      still call the final shot.</div>
+  <section class="card" aria-label="Path check">
+    <h2>Path check</h2>
+    <div id="pathLine" class="big">Enter the account total above.</div>
+    <div class="sub" id="pathSub"></div>
+  </section>
+
+  <section class="card" aria-label="What happened today">
+    <h2>What happened today</h2>
+    <label class="check"><input type="checkbox" name="trade" value="No trades"> No trades</label>
+    <label class="check"><input type="checkbox" name="trade" value="Sold TQQQ half"> Sold TQQQ half</label>
+    <label class="check"><input type="checkbox" name="trade" value="Sold TQQQ rest"> Sold TQQQ rest</label>
+    <label class="check"><input type="checkbox" name="trade" value="Sold TNA half"> Sold TNA half</label>
+    <label class="check"><input type="checkbox" name="trade" value="Sold TNA rest"> Sold TNA rest</label>
+    <label class="check"><input type="checkbox" name="trade" value="Stop hit TQQQ"> Stop hit — TQQQ</label>
+    <label class="check"><input type="checkbox" name="trade" value="Stop hit TNA"> Stop hit — TNA</label>
+    <label class="check"><input type="checkbox" name="trade" value="Bought"> Bought something</label>
+    <label class="check"><input type="checkbox" name="trade" value="Robinhood sold"> Robinhood positions sold</label>
+    <label class="check"><input type="checkbox" name="trade" value="Robinhood cash moved"> Robinhood cash moved to Schwab</label>
+    <label for="notesInput">Notes</label>
+    <textarea id="notesInput" placeholder="Anything else — market read, what you watched, next move…"></textarea>
+    <label class="check"><input type="checkbox" id="stopTqqq"> Stop placed — TQQQ $47.70</label>
+    <label class="check"><input type="checkbox" id="stopTna"> Stop placed — TNA $47.34</label>
+  </section>
+
+  <section class="card" aria-label="Your report">
+    <h2>Your report</h2>
+    <pre class="report" id="reportOut">Tap “Build report” — it uses the total and prices above.</pre>
+    <div class="btnrow"><button id="buildBtn" type="button">Build report</button></div>
+    <div class="btnrow">
+      <button class="ghost" id="copyBtn" type="button">Copy</button>
+      <button class="ghost" id="shareBtn" type="button">Share</button>
+      <button class="ghost" id="saveBtn" type="button">Save</button>
+    </div>
+    <div class="hint" id="saveMsg"></div>
+  </section>
+
+  <section class="card" aria-label="History">
+    <h2>Past reports</h2>
+    <div id="historyList"><div class="hint">No saved reports yet.</div></div>
   </section>
   <!-- ═══════════ END APP BODY ═══════════ -->
 
   <footer>
-    Solunar times for Athens, AL — computed on your phone, works offline.<br>
-    Your deer season log entries are still saved on this phone — just ask to bring the log back anytime.
+    GA cannot log into Schwab automatically — enter the total from the Schwab app.<br>
+    This is a 1-tap reporter, not a background agent.<br>
+    <a href="https://nathanaelsommer-collab.github.io/ga/">nathanaelsommer-collab.github.io/ga/</a><br>
+    Pending: Robinhood consolidation ~$1,863 (sell → ACH to bank → Schwab, not ACATS).<br>
+    SOXL: 0 shares — wash-sale window clears Dec 5.
   </footer>
 </div>
 
 <script>
-// ── GA model shell: solunar hunting planner ──────────
+// ── GA model shell: daily Schwab report ──────────
 const $ = id => document.getElementById(id);
-const LAT = 34.603, LON = -86.973; // Athens, AL
-
-// ── Date helpers (local, no timezone traps) ──
 const MONTHS=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 const DAYS=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
-function fmtShort(d){ return MONTHS[d.getMonth()]+' '+d.getDate(); }
 function fmtLong(d){ return DAYS[d.getDay()]+', '+MONTHS[d.getMonth()]+' '+d.getDate()+', '+d.getFullYear(); }
-function fmtTime(d){
-  let h=d.getHours(); const m=String(d.getMinutes()).padStart(2,'0');
-  const ap=h>=12?'PM':'AM'; h=h%12||12; return h+':'+m+' '+ap;
-}
 function esc(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function num(v){ const n=parseFloat(String(v==null?'':v).replace(/[$,\s]/g,'')); return isFinite(n)?n:null; }
+function money(n){ return '$'+Number(n).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}); }
+function money0(n){ return '$'+Math.round(Number(n)).toLocaleString('en-US'); }
+function signed(n,dec){ const d=(dec==null?2:dec); const s=(n>=0?'+':'−'); return s+'$'+Math.abs(n).toLocaleString('en-US',{minimumFractionDigits:d,maximumFractionDigits:d}); }
+function signedPct(n){ return (n>=0?'+':'−')+Math.abs(n).toFixed(2)+'%'; }
 
-// ── Sunrise / sunset (NOAA solar algorithm, no network needed) ──
-function sunTimes(date){
-  const rad=Math.PI/180;
-  const start=new Date(date.getFullYear(),0,0);
-  const N=Math.floor((date-start)/86400000);
-  const lngHour=LON/15;
-  function calc(isRise){
-    const t=N+((isRise?6:18)-lngHour)/24;
-    const M=0.9856*t-3.289;
-    let L=M+1.916*Math.sin(M*rad)+0.020*Math.sin(2*M*rad)+282.634;
-    L=((L%360)+360)%360;
-    let RA=Math.atan(0.91764*Math.tan(L*rad))/rad;
-    RA=((RA%360)+360)%360;
-    const Lq=Math.floor(L/90)*90, RAq=Math.floor(RA/90)*90;
-    RA=(RA+(Lq-RAq))/15;
-    const sinDec=0.39782*Math.sin(L*rad), cosDec=Math.cos(Math.asin(sinDec));
-    const cosH=(Math.cos(90.833*rad)-sinDec*Math.sin(LAT*rad))/(cosDec*Math.cos(LAT*rad));
-    if(cosH>1||cosH<-1) return null;
-    let H=Math.acos(cosH)/rad;
-    H=isRise?360-H:H;
-    const T=H/15+RA-0.06571*t-6.622;
-    return ((T-lngHour)%24+24)%24;
-  }
-  const riseUT=calc(true), setUT=calc(false);
-  const utcMid=Date.UTC(date.getFullYear(),date.getMonth(),date.getDate());
-  return {
-    rise: riseUT==null?null:new Date(utcMid+riseUT*3600000),
-    set:  setUT==null?null:new Date(utcMid+setUT*3600000),
-  };
-}
-
-// ── Moon age / phase (anchored on the Oct 10 2026 new moon; re-anchor yearly) ──
-const SYNODIC = 29.53058867;
-const NEW_MOON_REF = Date.UTC(2026, 9, 10, 15, 50); // Oct 10 2026 15:50 UTC
-function moonAge(date){
-  const noonUTC = Date.UTC(date.getFullYear(), date.getMonth(), date.getDate(), 12);
-  const days = (noonUTC - NEW_MOON_REF) / 86400000;
-  return ((days % SYNODIC) + SYNODIC) % SYNODIC;
-}
-function illumination(age){ return (1 - Math.cos(2 * Math.PI * age / SYNODIC)) / 2; }
-const PHASES = ['New Moon','Waxing Crescent','First Quarter','Waxing Gibbous','Full Moon','Waning Gibbous','Last Quarter','Waning Crescent'];
-const MOONS  = ['🌑','🌒','🌓','🌔','🌕','🌖','🌗','🌘'];
-function phaseIndex(age){ return Math.floor((age / SYNODIC) * 8 + 0.5) % 8; }
-
-// ── Solunar day: feeding windows + rating ──
-const LUNAR_HALF = 12.42 * 3600000; // half lunar day (upper/lower transit spacing)
-const LUNAR_DAY = 24.84 * 3600000;  // full lunar day (moonrise-to-moonrise)
-const PERIOD_SPAN = 3600000;        // ±1h around each peak
-function solunarDay(date){
-  const s = sunTimes(date);
-  const age = moonAge(date);
-  const pi = phaseIndex(age);
-  const dayStart = new Date(date.getFullYear(), date.getMonth(), date.getDate()).getTime();
-  const dayEnd = dayStart + 86400000;
-  const solarNoon = (s.rise.getTime() + s.set.getTime()) / 2;
-  // Signed age: near-new-moon days straddle 0/29.53, so fold to [-14.77, +14.77]
-  // for the daily 50.47-minute moon lag (avoids a spurious ~24h jump).
-  const signedAge = age > SYNODIC / 2 ? age - SYNODIC : age;
-  const shift = signedAge * 50.47 * 60000; // moon lags the sun ~50.47 min/day
-  const transit = solarNoon + shift;
-  const mrise = s.rise.getTime() + shift;
-  const mset = s.set.getTime() + shift;
-  function collect(seed, step){
-    const out = [];
-    for (let k = -2; k <= 2; k++) {
-      const t = seed + k * step;
-      if (t >= dayStart && t < dayEnd) out.push(t);
-    }
-    return out.sort((a,b)=>a-b).filter((t,i,a)=> i===0 || t - a[i-1] > 3600000);
-  }
-  const majors = collect(transit, LUNAR_HALF);
-  // Minors: each day's own moonrise + moonset (24.84h cycles), with ±1 day spill.
-  const minors = collect(mrise, LUNAR_DAY).concat(collect(mset, LUNAR_DAY))
-    .sort((a,b)=>a-b).filter((t,i,a)=> i===0 || t - a[i-1] > 3600000);
-  const stars = dayRating(age, majors, minors, s);
-  return {
-    date, sun: s, age,
-    illum: Math.round(illumination(age) * 100),
-    phase: PHASES[pi], emoji: MOONS[pi],
-    majors, minors, stars,
-  };
-}
-function dayRating(age, majors, minors, s){
-  const d = Math.min(age, Math.abs(age - SYNODIC / 2), SYNODIC - age);
-  let score = d <= 2 ? 3.0 : d <= 4 ? 2.25 : d <= 6 ? 1.5 : 0.75;
-  const primes = [
-    [s.rise.getTime() - 1800000, s.rise.getTime() + 7200000],
-    [s.set.getTime() - 7200000, s.set.getTime() + 1800000],
-  ];
-  const inPrime = c => primes.some(w => c + PERIOD_SPAN >= w[0] && c - PERIOD_SPAN <= w[1]);
-  const hits = majors.filter(inPrime).length;
-  score += Math.min(hits, 2) * 1.0;
-  if (!hits && minors.some(inPrime)) score += 0.5;
-  return Math.max(1, Math.min(5, Math.round(score)));
-}
-function fmtRange(center){
-  return fmtTime(new Date(center - PERIOD_SPAN)) + '–' + fmtTime(new Date(center + PERIOD_SPAN));
-}
-function starStr(n){ return '★'.repeat(n) + '☆'.repeat(5 - n); }
-const VERDICTS = {
-  5: 'Prime day — plan to be in the stand.',
-  4: 'Strong day — worth the sit.',
-  3: 'Fair — hunt the major windows.',
-  2: 'Slow — catch a major if you can.',
-  1: 'Quiet day — scout or rest.',
+// ── Positions (Schwab ending 2410, Nov 6 2026) ──
+const FLIPS = {
+  TQQQ: { shares: 239, entry: 52.9999, half: 60.95, rest: 66.25, stop: 47.70 },
+  TNA:  { shares: 475, entry: 52.60,   half: 60.49, rest: 65.75, stop: 47.34 },
 };
-function bestWindow(sd){
-  const s = sd.sun;
-  const am = [s.rise.getTime() - 1800000, s.rise.getTime() + 7200000];
-  const pm = [s.set.getTime() - 7200000, s.set.getTime() + 1800000];
-  const inWin = (c, w) => c + PERIOD_SPAN >= w[0] && c - PERIOD_SPAN <= w[1];
-  const maj = sd.majors.find(c => inWin(c, am) || inWin(c, pm));
-  if (maj) {
-    const when = inWin(maj, am) ? 'morning' : 'evening';
-    return 'Best sit: ' + when + ' major, ' + fmtRange(maj) + '.';
+const VOO = { shares: 37, entry: 679.279 };
+const START = 75413, START_DATE = new Date(2026, 10, 5); // Nov 5 2026 (local midnight)
+const CAGR = 1.417, DEC5_TARGET = 77640;
+
+function daysSinceStart(date){
+  const a = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+  const b = new Date(START_DATE.getFullYear(), START_DATE.getMonth(), START_DATE.getDate());
+  return Math.floor((a - b) / 86400000);
+}
+function requiredValue(date){
+  const days = Math.max(0, daysSinceStart(date));
+  return START * Math.pow(CAGR, days / 365);
+}
+function flipGain(price, f){ return { dollars: price - f.entry, pct: (price - f.entry) / f.entry * 100 }; }
+function flipStatus(price, f){
+  if (price <= f.stop) return 'BELOW STOP';
+  if (price >= f.rest) return 'REST HIT';
+  if (price >= f.rest * 0.98) return 'NEAR REST';
+  if (price >= f.half) return 'HALF HIT';
+  if (price >= f.half * 0.98) return 'NEAR HALF';
+  if (price <= f.stop * 1.02) return 'NEAR STOP';
+  return 'OK';
+}
+function statusClass(s){
+  if (s === 'BELOW STOP') return 'bad';
+  if (s === 'NEAR STOP') return 'warn';
+  if (s === 'REST HIT' || s === 'HALF HIT') return 'good';
+  return 'ok';
+}
+function distLine(price, target){
+  const d = target - price;
+  return (d >= 0 ? '+' : '−') + '$' + Math.abs(d).toFixed(2) + ' (' + (d >= 0 ? '+' : '−') + Math.abs(d / price * 100).toFixed(1) + '%)';
+}
+
+// ── Report builder (pure: takes values, returns text) ──
+function buildReport(o){
+  const date = o.date || new Date();
+  const req = requiredValue(date);
+  const total = o.total;
+  const gap = total - req;
+  const lines = [];
+  lines.push('Daily Schwab report — ' + fmtLong(date));
+  lines.push('Total: ' + money(total) + ' (vs required ' + money(req) + ', ' + (gap >= 0 ? 'ahead ' + money(gap) : 'behind ' + money(Math.abs(gap))) + ')');
+  lines.push('Cash: ' + money(o.cash == null ? 10099.37 : o.cash));
+  ['TQQQ', 'TNA'].forEach(function(sym){
+    const f = FLIPS[sym];
+    const p = o.prices[sym];
+    if (p == null) {
+      lines.push(sym + ' ' + f.shares + ' @ — (no price entered) — half ' + money(f.half) + ' / rest ' + money(f.rest) + ' / stop ' + money(f.stop) + ' — —');
+    } else {
+      const g = flipGain(p, f);
+      lines.push(sym + ' ' + f.shares + ' @ ' + money(p) + ' (' + signed(g.dollars) + ', ' + signedPct(g.pct) + ') — half ' + money(f.half) + ' / rest ' + money(f.rest) + ' / stop ' + money(f.stop) + ' — ' + flipStatus(p, f));
+    }
+  });
+  const vp = o.prices.VOO;
+  if (vp == null) lines.push('VOO 37 @ — (HOLD)');
+  else {
+    const g = (vp - VOO.entry) / VOO.entry * 100;
+    lines.push('VOO 37 @ ' + money(vp) + ' (' + signed(vp - VOO.entry) + ', ' + signedPct(g) + ') (HOLD)');
   }
-  const min = sd.minors.find(c => inWin(c, am) || inWin(c, pm));
-  if (min) {
-    const when = inWin(min, am) ? 'morning' : 'evening';
-    return 'Best sit: ' + when + ' minor, ' + fmtRange(min) + '.';
+  const trades = (o.trades || []).filter(function(t){ return t && t !== 'No trades'; });
+  lines.push('Trades today: ' + ((o.trades || []).indexOf('No trades') >= 0 || trades.length === 0 ? 'None' : trades.join('; ')));
+  lines.push('Notes: ' + ((o.notes || '').trim() || '—'));
+  return lines.join('\n');
+}
+
+// ── Live prices (optional, best-effort, never blocks) ──
+// Stooq first (per spec); Stooq now sits behind a JS browser check, so it
+// usually fails from fetch() — Yahoo via the AllOrigins CORS proxy is the
+// second attempt. Either way, manual entry is the reliable path.
+function parseStooq(csv){
+  const out = {};
+  const rows = String(csv || '').trim().split(/\r?\n/);
+  for (let i = 1; i < rows.length; i++) {
+    const c = rows[i].split(',');
+    if (c.length < 7) continue;
+    const sym = String(c[0] || '').replace(/\.us$/i, '').toUpperCase();
+    const close = parseFloat(c[6]);
+    if (sym && isFinite(close)) out[sym] = close;
   }
-  const c = sd.majors.length ? sd.majors[0] : sd.minors[0];
-  return c ? 'Best window: ' + fmtRange(c) + '.' : '';
+  return out;
+}
+function parseYahooQuote(json){
+  const out = {};
+  const res = json && json.quoteResponse && json.quoteResponse.result;
+  (res || []).forEach(function(r){
+    if (r && r.symbol && isFinite(r.regularMarketPrice)) out[String(r.symbol).toUpperCase()] = r.regularMarketPrice;
+  });
+  return out;
+}
+function fetchWithTimeout(url, ms, asJson){
+  const ctrl = (typeof AbortController !== 'undefined') ? new AbortController() : null;
+  const timer = setTimeout(function(){ if (ctrl) ctrl.abort(); }, ms);
+  const opts = ctrl ? { signal: ctrl.signal } : {};
+  return fetch(url, opts).then(function(r){
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    return asJson ? r.json() : r.text();
+  }).finally(function(){ clearTimeout(timer); });
+}
+function applyPrices(p){
+  let n = 0;
+  if (p.TQQQ) { $('tqqqPrice').value = Number(p.TQQQ).toFixed(2); n++; }
+  if (p.TNA) { $('tnaPrice').value = Number(p.TNA).toFixed(2); n++; }
+  if (p.VOO) { $('vooPrice').value = Number(p.VOO).toFixed(2); n++; }
+  if (n) { saveDraft(); renderAll(); }
+  return n;
+}
+function tryLivePrices(){
+  const msg = $('fetchMsg');
+  if (msg) msg.textContent = 'Fetching live prices…';
+  fetchWithTimeout('https://stooq.com/q/l/?s=tqqq.us,tna.us,voo.us&f=sd2t2ohlcv&h&e=csv', 5000, false)
+    .then(function(csv){ return applyPrices(parseStooq(csv)); })
+    .catch(function(){ return 0; })
+    .then(function(n){
+      if (n) {
+        if (msg) msg.textContent = 'Live prices loaded (Stooq, delayed) — check them against Schwab.';
+        return;
+      }
+      const yurl = 'https://api.allorigins.win/raw?url=' + encodeURIComponent('https://query1.finance.yahoo.com/v7/finance/quote?symbols=TQQQ,TNA,VOO');
+      return fetchWithTimeout(yurl, 5000, true)
+        .then(function(json){ return applyPrices(parseYahooQuote(json)); })
+        .catch(function(){ return 0; })
+        .then(function(n2){
+          if (msg) msg.textContent = n2 ? 'Live prices loaded (Yahoo, delayed) — check them against Schwab.' : 'Live prices unavailable — enter manually.';
+        });
+    });
+}
+
+// ── History (localStorage ga_reports, cap 30) ──
+function loadHistory(){
+  try { return JSON.parse(localStorage.getItem('ga_reports') || '[]'); } catch (e) { return []; }
+}
+function saveHistory(list){
+  try { localStorage.setItem('ga_reports', JSON.stringify(list.slice(0, 30))); } catch (e) {}
+}
+function renderHistory(){
+  const el = $('historyList');
+  if (!el) return;
+  const list = loadHistory();
+  if (!list.length) { el.innerHTML = '<div class="hint">No saved reports yet.</div>'; return; }
+  el.innerHTML = list.map(function(r, i){
+    return '<div class="histrow" data-i="' + i + '"><span class="d">' + esc(r.dateLabel) + '</span><span class="v">' + esc(money0(r.total)) + '</span></div>';
+  }).join('');
+  const rows = el.querySelectorAll ? el.querySelectorAll('.histrow') : [];
+  rows.forEach(function(row){
+    row.addEventListener('click', function(){
+      const r = loadHistory()[parseInt(row.getAttribute('data-i'), 10)];
+      if (r) { $('reportOut').textContent = r.text; $('saveMsg').textContent = 'Loaded report from ' + r.dateLabel + ' — Copy / Share to send it again.'; }
+    });
+  });
+}
+
+// ── Draft persistence ──
+function saveDraft(){
+  try {
+    localStorage.setItem('ga_daily_draft', JSON.stringify({
+      total: $('totalInput').value, cash: $('cashInput').value,
+      tqqq: $('tqqqPrice').value, tna: $('tnaPrice').value, voo: $('vooPrice').value,
+      notes: $('notesInput').value,
+    }));
+  } catch (e) {}
+}
+function loadDraft(){
+  try {
+    const d = JSON.parse(localStorage.getItem('ga_daily_draft') || 'null');
+    if (!d) return;
+    if (d.total) $('totalInput').value = d.total;
+    if (d.cash) $('cashInput').value = d.cash;
+    if (d.tqqq) $('tqqqPrice').value = d.tqqq;
+    if (d.tna) $('tnaPrice').value = d.tna;
+    if (d.voo) $('vooPrice').value = d.voo;
+    if (d.notes) $('notesInput').value = d.notes;
+  } catch (e) {}
 }
 
 // ── Rendering ──
-function renderToday(){
-  const now = new Date();
-  const sd = solunarDay(now);
-  $('todayLine').textContent = fmtLong(now);
-  $('sunLine').textContent = 'Sunrise ' + fmtTime(sd.sun.rise) + ' · Sunset ' + fmtTime(sd.sun.set) + ' · Athens, AL';
-  $('moonLine').textContent = sd.emoji + ' ' + sd.phase;
-  $('moonSub').textContent = sd.illum + '% lit · moon age ' + sd.age.toFixed(1) + ' days';
-  $('starLine').textContent = starStr(sd.stars);
-  $('verdictLine').textContent = VERDICTS[sd.stars];
-  $('bestLine').textContent = bestWindow(sd);
-
-  $('feedList').innerHTML = sd.majors.map(c =>
-    '<div class="feedrow"><span class="tag major">Major</span><span class="when">' + esc(fmtRange(c)) + '</span></div>'
-  ).join('') + sd.minors.map(c =>
-    '<div class="feedrow"><span class="tag minor">Minor</span><span class="when">' + esc(fmtRange(c)) + '</span></div>'
-  ).join('');
-}
-function renderWeek(){
-  const now = new Date();
-  const days = [];
-  for (let i = 0; i < 7; i++) {
-    const d = new Date(now.getFullYear(), now.getMonth(), now.getDate() + i);
-    days.push(solunarDay(d));
-  }
-  const bestStars = Math.max.apply(null, days.map(d => d.stars));
-  const bestIdx = days.findIndex(d => d.stars === bestStars);
-  $('weekList').innerHTML = days.map((sd, i) => {
-    const d = sd.date;
-    const majors = sd.majors.map(c => fmtTime(new Date(c))).join(' · ') || '—';
-    return '<div class="dayrow">' +
-      '<span class="d">' + esc(DAYS[d.getDay()] + ' ' + fmtShort(d)) + (i === 0 ? ' (today)' : '') + '</span>' +
-      '<span>' + esc(sd.emoji) + '</span>' +
-      '<span class="st">' + esc(starStr(sd.stars)) + '</span>' +
-      '<span class="maj">' + esc(majors) + (i === bestIdx ? ' <span class="badge">Best bet</span>' : '') + '</span>' +
-      '</div>';
+function renderFlips(){
+  const el = $('flipList');
+  if (!el) return;
+  const rows = ['TQQQ', 'TNA'].map(function(sym){
+    const f = FLIPS[sym];
+    const p = num($(sym === 'TQQQ' ? 'tqqqPrice' : 'tnaPrice').value);
+    if (p == null) {
+      return '<div class="fliprow"><div class="top"><span class="sym">' + sym + ' ' + f.shares + ' sh</span><span class="pill ok">NO PRICE</span></div>' +
+        '<div class="lvl">Entry ' + money(f.entry) + ' · Half ' + money(f.half) + ' · Rest ' + money(f.rest) + ' · Stop ' + money(f.stop) + '</div></div>';
+    }
+    const g = flipGain(p, f), st = flipStatus(p, f);
+    return '<div class="fliprow"><div class="top"><span class="sym">' + sym + ' ' + f.shares + ' sh @ ' + money(p) + '</span><span class="pill ' + statusClass(st) + '">' + st + '</span></div>' +
+      '<div class="lvl">' + signed(g.dollars) + ' (' + signedPct(g.pct) + ') vs entry ' + money(f.entry) + '</div>' +
+      '<div class="lvl">Half ' + money(f.half) + ' ' + distLine(p, f.half) + ' · Rest ' + money(f.rest) + ' ' + distLine(p, f.rest) + ' · Stop ' + money(f.stop) + ' ' + distLine(p, f.stop) + '</div></div>';
   }).join('');
+  const vp = num($('vooPrice').value);
+  const vooRow = vp == null
+    ? '<div class="fliprow"><div class="top"><span class="sym">VOO 37 sh</span><span class="pill ok">HOLD</span></div><div class="lvl">Entry ' + money(VOO.entry) + ' · No stop · No flip exit</div></div>'
+    : '<div class="fliprow"><div class="top"><span class="sym">VOO 37 sh @ ' + money(vp) + '</span><span class="pill ok">HOLD</span></div><div class="lvl">' + signed(vp - VOO.entry) + ' (' + signedPct((vp - VOO.entry) / VOO.entry * 100) + ') vs entry ' + money(VOO.entry) + ' · No stop · No flip exit</div></div>';
+  el.innerHTML = rows + vooRow;
 }
-function renderAll(){ renderToday(); renderWeek(); }
+function renderPath(){
+  const total = num($('totalInput').value);
+  const req = requiredValue(new Date());
+  const line = $('pathLine'), sub = $('pathSub');
+  if (!line) return;
+  if (total == null) {
+    line.textContent = 'Enter the account total above.';
+    if (sub) sub.textContent = 'Required today: ' + money(req) + ' · Dec 5 target: ' + money(DEC5_TARGET) + ' · Nov 5, 2027 required: $106,860';
+    return;
+  }
+  const gap = total - req;
+  line.textContent = (gap >= 0 ? 'Ahead ' + money(gap) : 'Behind ' + money(Math.abs(gap))) + ' of path (' + (gap >= 0 ? '+' : '−') + Math.abs(gap / req * 100).toFixed(2) + '%)';
+  if (sub) sub.textContent = 'Required today: ' + money(req) + ' · Dec 5 target: ' + money(DEC5_TARGET) + ' · Nov 5, 2027 required: $106,860';
+}
+function renderAll(){
+  const now = new Date();
+  if ($('todayLine')) $('todayLine').textContent = fmtLong(now);
+  renderFlips();
+  renderPath();
+}
+function collectReportInput(){
+  const trades = [];
+  const boxes = document.querySelectorAll ? document.querySelectorAll('input[name="trade"]:checked') : [];
+  boxes.forEach(function(b){ trades.push(b.value); });
+  return {
+    date: new Date(),
+    total: num($('totalInput').value),
+    cash: num($('cashInput').value),
+    prices: { TQQQ: num($('tqqqPrice').value), TNA: num($('tnaPrice').value), VOO: num($('vooPrice').value) },
+    trades: trades,
+    notes: $('notesInput').value,
+  };
+}
+function doBuild(){
+  const inp = collectReportInput();
+  if (inp.total == null) {
+    $('reportOut').textContent = 'Enter the account total first — that is the one required number.';
+    return null;
+  }
+  const text = buildReport(inp);
+  $('reportOut').textContent = text;
+  $('saveMsg').textContent = '';
+  saveDraft();
+  return text;
+}
+function copyText(text, okMsg){
+  function fallback(){
+    const ta = document.createElement('textarea');
+    ta.value = text; document.body.appendChild(ta); ta.select();
+    try { document.execCommand('copy'); } catch (e) {}
+    document.body.removeChild(ta);
+  }
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(text).then(function(){ $('saveMsg').textContent = okMsg; })
+      .catch(function(){ fallback(); $('saveMsg').textContent = okMsg; });
+  } else { fallback(); $('saveMsg').textContent = okMsg; }
+}
 
 // ── Init ──
+loadDraft();
 renderAll();
-setInterval(renderAll, 3600000);
+['totalInput','cashInput','tqqqPrice','tnaPrice','vooPrice','notesInput'].forEach(function(id){
+  const el = $(id);
+  if (el) el.addEventListener('input', function(){ saveDraft(); renderAll(); });
+});
+if ($('fetchBtn')) $('fetchBtn').addEventListener('click', tryLivePrices);
+if ($('buildBtn')) $('buildBtn').addEventListener('click', doBuild);
+if ($('copyBtn')) $('copyBtn').addEventListener('click', function(){
+  const t = $('reportOut').textContent;
+  if (!t || t.indexOf('Daily Schwab report') !== 0) { $('saveMsg').textContent = 'Build the report first.'; return; }
+  copyText(t, 'Copied — paste it into Muse.');
+});
+if ($('shareBtn')) $('shareBtn').addEventListener('click', function(){
+  const t = $('reportOut').textContent;
+  if (!t || t.indexOf('Daily Schwab report') !== 0) { $('saveMsg').textContent = 'Build the report first.'; return; }
+  if (navigator.share) {
+    navigator.share({ title: 'Daily Schwab report', text: t }).catch(function(){});
+  } else {
+    copyText(t, 'Sharing is not available here — copied instead. Paste it into Muse.');
+  }
+});
+if ($('saveBtn')) $('saveBtn').addEventListener('click', function(){
+  const text = doBuild();
+  if (!text) return;
+  const list = loadHistory();
+  list.unshift({ dateLabel: fmtLong(new Date()), total: num($('totalInput').value), text: text });
+  saveHistory(list);
+  renderHistory();
+  $('saveMsg').textContent = 'Saved. Copy / Share it to send it to Beauzo.';
+});
+renderHistory();
 
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
