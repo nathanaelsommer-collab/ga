@@ -106,8 +106,9 @@ ok(lines[4].indexOf('TNA 475 @ $52.78') === 0, `TNA line: ${lines[4]}`);
 ok(lines[4].indexOf('half $60.49 / rest $65.75 / stop $47.34') >= 0, 'TNA line has levels');
 ok(lines[5].indexOf('VOO 37 @ $678.78') === 0 && lines[5].indexOf('(HOLD)') >= 0, `VOO line: ${lines[5]}`);
 ok(lines[6] === 'Trades today: None', `trades line: ${lines[6]}`);
-ok(lines[7] === 'Notes: —', `notes line: ${lines[7]}`);
-ok(lines.length === 8, `report has exactly 8 lines (got ${lines.length})`);
+ok(lines[7] === 'Cooldown (Rule 8): no win recorded', `cooldown line (no win): ${lines[7]}`);
+ok(lines[8] === 'Notes: —', `notes line: ${lines[8]}`);
+ok(lines.length === 9, `report has exactly 9 lines (got ${lines.length})`);
 
 // 6. Report with trades + notes + behind-path
 const rep2 = buildReport({
@@ -119,6 +120,21 @@ ok(rep2.indexOf('behind $5,485') >= 0, 'behind-path line');
 ok(rep2.indexOf('TQQQ 239 @ $47.00') >= 0 && rep2.indexOf('BELOW STOP') >= 0, 'below-stop in report');
 ok(rep2.indexOf('Trades today: Sold TQQQ half; Robinhood sold') >= 0, 'trades joined with ;');
 ok(rep2.indexOf('Notes: Bounce fading.') >= 0, 'notes carried through');
+
+// 6b. Cooldown line in the report (Rule 8)
+const repCd = buildReport({
+  date: local(2026, 11, 7), total: 76000, cash: 10099.37,
+  prices: { TQQQ: 52.61, TNA: 52.78, VOO: 678.78 }, trades: [], notes: '',
+  lastWin: '2026-11-06',
+});
+ok(repCd.indexOf('Cooldown (Rule 8): last win Fri, Nov 6, 2026 — earliest re-buy Fri, Nov 13, 2026') >= 0,
+  `cooldown line with win: ${repCd.split('\n').find(l => l.indexOf('Cooldown') === 0)}`);
+ok(repCd.split('\n').length === 9, 'report with cooldown still 9 lines');
+const repNoCd = buildReport({
+  date: local(2026, 11, 7), total: 76000, cash: 10099.37,
+  prices: { TQQQ: 52.61, TNA: 52.78, VOO: 678.78 }, trades: [], notes: '',
+});
+ok(repNoCd.indexOf('Cooldown (Rule 8): no win recorded') >= 0, 'cooldown line without win');
 
 // 7. Report with no prices entered
 const rep3 = buildReport({
@@ -182,8 +198,8 @@ ok(!html.includes('type="password"') && !html.toLowerCase().includes('brokerage 
   'no password field / brokerage login in app');
 ok(!html.includes('ga_hunts') && !html.includes('Moon &amp; movement'),
   'Moon planner body fully replaced');
-ok(fs.readFileSync(__dirname + '/service-worker.js', 'utf8').includes('ga-v14'), 'SW bumped to ga-v14');
-ok(!fs.readFileSync(__dirname + '/service-worker.js', 'utf8').includes('ga-v13'), 'no ga-v13 left in SW');
+ok(fs.readFileSync(__dirname + '/service-worker.js', 'utf8').includes('ga-v15'), 'SW bumped to ga-v15');
+ok(!fs.readFileSync(__dirname + '/service-worker.js', 'utf8').includes('ga-v14'), 'no ga-v14 left in SW');
 ok(html.includes('ga_reports') && html.includes('localStorage'), 'history uses localStorage ga_reports');
 
 console.log(`\n${pass} passed, ${fail} failed`);

@@ -14,12 +14,13 @@ the shell (PWA wiring, styles) stays as-is.
 
 ## Current function
 
-- **Daily Schwab report** (ga-v14, Nov 6 2026 — replaced the Moon & Movement
-  planner; backup at `~/workspace/ga-backups/moon-planner-index-2026-11-06.html`).
+- **Daily Schwab report** (ga-v15, Nov 7 2026 — added the Rule 8 win-cooldown tile; backup at `~/workspace/ga-backups/daily-schwab-index-2026-11-07-rule8.html`).
   Enter the Schwab account total + TQQQ/TNA/VOO prices from the Schwab app;
   the app checks flip levels (TQQQ half $60.95 / rest $66.25 / stop $47.70;
   TNA half $60.49 / rest $65.75 / stop $47.34; VOO is HOLD, no stop), checks
-  the $1M path (required $77,640 by Dec 5, 2026), and builds a plain-text
+  the $1M path (required $77,640 by Dec 5, 2026), shows the Rule 8 win
+  cooldown (no new buy for 7 days after a win — enter the last winning-exit
+  date and it shows the earliest re-buy date), and builds a plain-text
   report to copy/share to Beauzo. History is kept on-device in localStorage
   (`ga_reports`, last 30). Live prices are best-effort (Stooq, then Yahoo);
   manual entry always works. No brokerage login — GA cannot log into Schwab.

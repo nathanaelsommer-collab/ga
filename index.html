@@ -139,6 +139,15 @@
     <div class="sub" id="pathSub"></div>
   </section>
 
+  <section class="card" aria-label="Win cooldown">
+    <h2>Win cooldown — Rule 8</h2>
+    <div id="cooldownLine" class="big">—</div>
+    <div class="sub" id="cooldownSub"></div>
+    <label for="lastWinDate">Last winning exit (date you sold for a profit)</label>
+    <input id="lastWinDate" type="date" value="2026-11-06">
+    <div class="hint">After a win: no new buy for 7 days, then run the buy past Beauzo first (new setup or same move? setup or feeling? exit before entry?). First position after a win is half size. A losing sale starts no cooldown.</div>
+  </section>
+
   <section class="card" aria-label="What happened today">
     <h2>What happened today</h2>
     <label class="check"><input type="checkbox" name="trade" value="No trades"> No trades</label>
@@ -207,8 +216,9 @@ const START = 75413, START_DATE = new Date(2026, 10, 5); // Nov 5 2026 (local mi
 const CAGR = 1.417, DEC5_TARGET = 77640;
 
 function daysSinceStart(date){
-  const a = new Date(date.getFullYear(), date.getMonth(), date.getDate());
-  const b = new Date(START_DATE.getFullYear(), START_DATE.getMonth(), START_DATE.getDate());
+  // UTC calendar days — DST transitions must not change the required path.
+  const a = Date.UTC(date.getFullYear(), date.getMonth(), date.getDate());
+  const b = Date.UTC(START_DATE.getFullYear(), START_DATE.getMonth(), START_DATE.getDate());
   return Math.floor((a - b) / 86400000);
 }
 function requiredValue(date){
@@ -264,6 +274,15 @@ function buildReport(o){
   }
   const trades = (o.trades || []).filter(function(t){ return t && t !== 'No trades'; });
   lines.push('Trades today: ' + ((o.trades || []).indexOf('No trades') >= 0 || trades.length === 0 ? 'None' : trades.join('; ')));
+  const lw = o.lastWin;
+  if (lw) {
+    const parts = lw.split('-');
+    const win = new Date(+parts[0], +parts[1] - 1, +parts[2]);
+    const rebuy = new Date(win.getFullYear(), win.getMonth(), win.getDate() + 7);
+    lines.push('Cooldown (Rule 8): last win ' + fmtLong(win) + ' — earliest re-buy ' + fmtLong(rebuy));
+  } else {
+    lines.push('Cooldown (Rule 8): no win recorded');
+  }
   lines.push('Notes: ' + ((o.notes || '').trim() || '—'));
   return lines.join('\n');
 }
@@ -360,6 +379,7 @@ function saveDraft(){
     localStorage.setItem('ga_daily_draft', JSON.stringify({
       total: $('totalInput').value, cash: $('cashInput').value,
       tqqq: $('tqqqPrice').value, tna: $('tnaPrice').value, voo: $('vooPrice').value,
+      lastWin: $('lastWinDate') ? $('lastWinDate').value : '',
       notes: $('notesInput').value,
     }));
   } catch (e) {}
@@ -373,6 +393,7 @@ function loadDraft(){
     if (d.tqqq) $('tqqqPrice').value = d.tqqq;
     if (d.tna) $('tnaPrice').value = d.tna;
     if (d.voo) $('vooPrice').value = d.voo;
+    if (d.lastWin && $('lastWinDate')) $('lastWinDate').value = d.lastWin;
     if (d.notes) $('notesInput').value = d.notes;
   } catch (e) {}
 }
@@ -413,11 +434,36 @@ function renderPath(){
   line.textContent = (gap >= 0 ? 'Ahead ' + money(gap) : 'Behind ' + money(Math.abs(gap))) + ' of path (' + (gap >= 0 ? '+' : '−') + Math.abs(gap / req * 100).toFixed(2) + '%)';
   if (sub) sub.textContent = 'Required today: ' + money(req) + ' · Dec 5 target: ' + money(DEC5_TARGET) + ' · Nov 5, 2027 required: $106,860';
 }
+function renderCooldown(){
+  const line = $('cooldownLine'), sub = $('cooldownSub');
+  if (!line) return;
+  const v = $('lastWinDate') ? $('lastWinDate').value : '';
+  if (!v) {
+    line.textContent = 'No win recorded — no cooldown.';
+    if (sub) sub.textContent = 'Enter the date of your last winning exit to start the 7-day clock.';
+    return;
+  }
+  const parts = v.split('-');
+  const win = new Date(+parts[0], +parts[1] - 1, +parts[2]);
+  const rebuy = new Date(win.getFullYear(), win.getMonth(), win.getDate() + 7);
+  const today = new Date();
+  const todayMid = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+  const rebuyMid = new Date(rebuy.getFullYear(), rebuy.getMonth(), rebuy.getDate());
+  const daysLeft = Math.round((rebuyMid - todayMid) / 86400000);
+  if (daysLeft > 0) {
+    line.textContent = 'Cooling off — no new buys until ' + MONTHS[rebuy.getMonth()] + ' ' + rebuy.getDate() + ' (' + daysLeft + ' day' + (daysLeft === 1 ? '' : 's') + ' left).';
+    if (sub) sub.textContent = 'Last win: ' + fmtLong(win) + ' · Earliest re-buy: ' + fmtLong(rebuy) + ' · Then checkpoint with Beauzo before buying.';
+  } else {
+    line.textContent = 'Clear — cooldown over. Checkpoint with Beauzo before the next buy.';
+    if (sub) sub.textContent = 'Last win: ' + fmtLong(win) + ' · Earliest re-buy was ' + fmtLong(rebuy) + ' · First position after a win is half size.';
+  }
+}
 function renderAll(){
   const now = new Date();
   if ($('todayLine')) $('todayLine').textContent = fmtLong(now);
   renderFlips();
   renderPath();
+  renderCooldown();
 }
 function collectReportInput(){
   const trades = [];
@@ -428,6 +474,7 @@ function collectReportInput(){
     total: num($('totalInput').value),
     cash: num($('cashInput').value),
     prices: { TQQQ: num($('tqqqPrice').value), TNA: num($('tnaPrice').value), VOO: num($('vooPrice').value) },
+    lastWin: $('lastWinDate') ? $('lastWinDate').value : '',
     trades: trades,
     notes: $('notesInput').value,
   };
@@ -460,7 +507,7 @@ function copyText(text, okMsg){
 // ── Init ──
 loadDraft();
 renderAll();
-['totalInput','cashInput','tqqqPrice','tnaPrice','vooPrice','notesInput'].forEach(function(id){
+['totalInput','cashInput','tqqqPrice','tnaPrice','vooPrice','notesInput','lastWinDate'].forEach(function(id){
   const el = $(id);
   if (el) el.addEventListener('input', function(){ saveDraft(); renderAll(); });
 });
