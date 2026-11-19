@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>GA</title>
 <meta name="theme-color" content="#08111e">
-<meta name="description" content="GA — daily Schwab report.">
+<meta name="description" content="GA — Allianz refund decision.">
 <link rel="manifest" href="./manifest.json">
 <link rel="icon" type="image/svg+xml" href="./favicon.svg">
 <!--
@@ -59,7 +59,7 @@
   footer{text-align:center;color:var(--dim);font-size:12px;margin-top:22px;line-height:1.6;}
   a{color:var(--accent);}
 
-  /* ── daily report ── */
+  /* ── shared ── */
   .today{font-size:15px;color:var(--dim);margin-bottom:6px;}
   .hint{margin-top:8px;font-size:13px;color:var(--dim);line-height:1.5;}
   .sub{font-size:13px;color:var(--dim);margin-top:4px;line-height:1.5;}
@@ -69,19 +69,6 @@
     font-size:16px; padding:13px 14px; font-family:inherit; min-height:84px; resize:vertical;
   }
   textarea:focus{outline:none;border-color:var(--accent);}
-  input[type="checkbox"]{width:auto;accent-color:var(--accent);margin-right:10px;transform:scale(1.25);}
-  .check{display:flex;align-items:center;font-size:15px;color:var(--text);margin:0;padding:9px 0;border-bottom:1px solid var(--line);cursor:pointer;}
-  .check:last-child{border-bottom:none;}
-  .fliprow{padding:12px 0;border-bottom:1px solid var(--line);font-size:15px;line-height:1.55;}
-  .fliprow:last-child{border-bottom:none;}
-  .fliprow .top{display:flex;justify-content:space-between;align-items:center;gap:10px;}
-  .fliprow .sym{font-weight:700;}
-  .fliprow .lvl{font-size:13px;color:var(--dim);margin-top:2px;}
-  .pill{font-size:11px;font-weight:700;letter-spacing:1px;padding:3px 9px;border-radius:20px;text-transform:uppercase;white-space:nowrap;}
-  .pill.ok{background:var(--line);color:var(--text);}
-  .pill.good{background:#22c55e;color:#04121f;}
-  .pill.warn{background:#fbbf24;color:#1c1005;}
-  .pill.bad{background:var(--danger);color:#1c0505;}
   pre.report{
     background:#0a1526;border:1px solid var(--line);border-radius:10px;
     padding:14px;font-size:14px;line-height:1.6;white-space:pre-wrap;word-wrap:break-word;
@@ -95,6 +82,32 @@
   .histrow .v{color:var(--dim);}
   .big{font-size:20px;font-weight:700;}
   .muted{color:var(--dim);}
+
+  /* ── Allianz decision ── */
+  .deadline{
+    background:#3a2a05; border:1px solid #fbbf24; border-radius:12px;
+    padding:14px; font-size:16px; line-height:1.55; margin-bottom:12px;
+  }
+  .deadline b{color:#fbbf24;}
+  .fact{display:flex;justify-content:space-between;gap:10px;padding:9px 0;border-bottom:1px solid var(--line);font-size:15px;line-height:1.45;}
+  .fact:last-child{border-bottom:none;}
+  .fact .k{color:var(--dim);flex-shrink:0;}
+  .fact .v{text-align:right;font-weight:600;}
+  .mono{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:16px;letter-spacing:1px;}
+  .opt{
+    display:block;width:100%;text-align:left;background:#0a1526;color:var(--text);
+    border:2px solid var(--line);border-radius:14px;padding:16px;margin:0 0 12px;
+    font-size:16px;font-weight:400;line-height:1.5;cursor:pointer;
+  }
+  .opt b{display:block;font-size:18px;margin-bottom:4px;}
+  .opt .why{color:var(--dim);font-size:14px;}
+  .opt.sel{border-color:var(--accent);background:#0d2138;}
+  .opt.sel b::after{content:"  ✓";color:var(--accent);}
+  .callbtn{display:block;text-align:center;text-decoration:none;background:#22c55e;color:#04121f;font-weight:700;font-size:18px;border-radius:12px;padding:16px;margin-top:12px;}
+  .callbtn:active{transform:scale(.98);}
+  .mailbtn{display:block;text-align:center;text-decoration:none;background:transparent;color:var(--accent);border:1px solid var(--line);font-weight:600;font-size:15px;border-radius:12px;padding:13px;margin-top:10px;}
+  .checkline{display:flex;align-items:center;gap:8px;font-size:15px;color:var(--text);padding:6px 0;}
+  .checkline::before{content:"✓";color:#22c55e;font-weight:700;}
 </style>
 </head>
 <body>
@@ -105,71 +118,57 @@
   </header>
 
   <!-- ═══════════ APP BODY — replace everything in this block ═══════════ -->
-  <section class="card" aria-label="Today">
-    <h2>📊 Daily Schwab report</h2>
+  <section class="card" aria-label="Decide today">
+    <h2>✈️ Allianz — decide today</h2>
     <div class="today" id="todayLine"></div>
-    <div class="sub">Schwab ending 2410 · Goal $75,413 → $1M by Apr 15, 2034</div>
-    <label for="totalInput">Account total value ($) — from the Schwab app</label>
-    <input id="totalInput" inputmode="decimal" autocomplete="off" placeholder="e.g. 75824" type="text">
-    <label for="cashInput">Cash ($)</label>
-    <input id="cashInput" inputmode="decimal" autocomplete="off" type="text" value="10099.37">
+    <div class="deadline"><b>Today is the safe day to act.</b><br>
+    The 15-day free-look window runs from the Nov 5 purchase — Nov 5 + 15 days is Fri Nov 20, but counting inclusively it could close <b>today, Thu Nov 19</b>. Tomorrow is the outside date at best.</div>
+    <div class="fact"><span class="k">Plan</span><span class="v mono" id="planNo">EUSP2608942799</span></div>
+    <div class="fact"><span class="k">Policy</span><span class="v">Dom Airline w RTW 3</span></div>
+    <div class="fact"><span class="k">Bought</span><span class="v">Nov 5, 2026</span></div>
+    <div class="fact"><span class="k">Trip dates</span><span class="v">Nov 21, 2026 only</span></div>
+    <div class="fact"><span class="k">Trip status</span><span class="v">Cancelled Nov 17 — never started</span></div>
+    <div class="row"><button class="ghost" id="copyPlanBtn" type="button">Copy plan number</button></div>
+    <div class="hint" id="copyMsg"></div>
+    <div class="sub" style="margin-top:12px;">Why a refund looks likely:</div>
+    <div class="checkline">Trip was cancelled, never started</div>
+    <div class="checkline">No claim filed on the policy</div>
+    <div class="checkline">Still inside the 15-day free-look window</div>
+    <div class="hint">The premium amount was not in Allianz's email — the refund figure comes from Allianz when you cancel. Nothing here states a dollar amount.</div>
   </section>
 
-  <section class="card" aria-label="Today's numbers">
-    <h2>Today's prices</h2>
-    <label for="tqqqPrice">TQQQ — entry $52.9999</label>
-    <input id="tqqqPrice" inputmode="decimal" autocomplete="off" placeholder="e.g. 52.61" type="text">
-    <label for="tnaPrice">TNA — entry $52.60</label>
-    <input id="tnaPrice" inputmode="decimal" autocomplete="off" placeholder="e.g. 52.78" type="text">
-    <label for="vooPrice">VOO — entry $679.279 (HOLD)</label>
-    <input id="vooPrice" inputmode="decimal" autocomplete="off" placeholder="e.g. 678.78" type="text">
-    <div class="row"><button class="ghost" id="fetchBtn" type="button">Try live prices (Stooq)</button></div>
-    <div class="hint" id="fetchMsg">Optional — tries Stooq, then Yahoo. Type them in from Schwab if this fails.</div>
+  <section class="card" aria-label="Two ways to play it">
+    <h2>Two ways to play it</h2>
+    <button class="opt" id="optCancel" type="button">
+      <b>A — Cancel for a full refund</b>
+      <span class="why">Clean exit. Trip's gone, policy never used — get the premium back and be done with it.</span>
+    </button>
+    <button class="opt" id="optMove" type="button">
+      <b>B — Ask Allianz to move it to January</b>
+      <span class="why">If the same cover can shift to the Jan 8 Anchorage trip, that could be worth more than the refund. Ask first — don't assume it transfers.</span>
+    </button>
+    <div class="hint">Tap one to mark your lean. Either way, the contact is the same:</div>
+    <a class="callbtn" href="tel:+18668894569">Call Allianz — 1-866-889-4569</a>
+    <a class="mailbtn" href="mailto:customerservice@allianzassistance.com?subject=Plan%20EUSP2608942799%20—%20cancelled%20Nov%2021%20trip">Email — customerservice@allianzassistance.com</a>
+    <div class="hint">Or cancel in the Allyz app / My Plan. Quote plan <span class="mono">EUSP2608942799</span> either way.</div>
   </section>
 
-  <section class="card" aria-label="Flip check">
-    <h2>Flip check</h2>
-    <div id="flipList"></div>
-    <div class="hint">TNA total is 476.97 shares (475 new + 1.97 old). Stops are automatic stop-market, GTC, regular hours only. VOO has no stop and no flip exit.</div>
+  <section class="card" aria-label="What I decided">
+    <h2>What I decided</h2>
+    <div class="btnrow" style="margin-top:0;">
+      <button id="decidedCancel" type="button">I cancelled it</button>
+      <button id="decidedMove" type="button" style="background:#22c55e;">I asked to move it</button>
+    </div>
+    <label for="refundInput">Refund confirmed ($) — only if Allianz gave you a figure</label>
+    <input id="refundInput" inputmode="decimal" autocomplete="off" placeholder="e.g. 89.00 — leave blank if unknown" type="text">
+    <label for="notesInput">Notes — who you spoke to, confirmation number, what they said</label>
+    <textarea id="notesInput" placeholder="e.g. Spoke to Maria, conf #…, refund in 5–7 business days…"></textarea>
+    <div class="row"><button id="buildBtn" type="button">Build message to Beauzo</button></div>
   </section>
 
-  <section class="card" aria-label="Path check">
-    <h2>Path check</h2>
-    <div id="pathLine" class="big">Enter the account total above.</div>
-    <div class="sub" id="pathSub"></div>
-  </section>
-
-  <section class="card" aria-label="Win cooldown">
-    <h2>Win cooldown — Rule 8</h2>
-    <div id="cooldownLine" class="big">—</div>
-    <div class="sub" id="cooldownSub"></div>
-    <label for="lastWinDate">Last winning exit (date you sold for a profit)</label>
-    <input id="lastWinDate" type="date" value="2026-11-06">
-    <div class="hint">After a win: no new buy for 7 days, then run the buy past Beauzo first (new setup or same move? setup or feeling? exit before entry?). First position after a win is half size. A losing sale starts no cooldown.</div>
-  </section>
-
-  <section class="card" aria-label="What happened today">
-    <h2>What happened today</h2>
-    <label class="check"><input type="checkbox" name="trade" value="No trades"> No trades</label>
-    <label class="check"><input type="checkbox" name="trade" value="Sold TQQQ half"> Sold TQQQ half</label>
-    <label class="check"><input type="checkbox" name="trade" value="Sold TQQQ rest"> Sold TQQQ rest</label>
-    <label class="check"><input type="checkbox" name="trade" value="Sold TNA half"> Sold TNA half</label>
-    <label class="check"><input type="checkbox" name="trade" value="Sold TNA rest"> Sold TNA rest</label>
-    <label class="check"><input type="checkbox" name="trade" value="Stop hit TQQQ"> Stop hit — TQQQ</label>
-    <label class="check"><input type="checkbox" name="trade" value="Stop hit TNA"> Stop hit — TNA</label>
-    <label class="check"><input type="checkbox" name="trade" value="Bought"> Bought something</label>
-    <label class="check"><input type="checkbox" name="trade" value="Robinhood sold"> Robinhood positions sold</label>
-    <label class="check"><input type="checkbox" name="trade" value="Robinhood cash moved"> Robinhood cash moved to Schwab</label>
-    <label for="notesInput">Notes</label>
-    <textarea id="notesInput" placeholder="Anything else — market read, what you watched, next move…"></textarea>
-    <label class="check"><input type="checkbox" id="stopTqqq"> Stop placed — TQQQ $47.70</label>
-    <label class="check"><input type="checkbox" id="stopTna"> Stop placed — TNA $47.34</label>
-  </section>
-
-  <section class="card" aria-label="Your report">
-    <h2>Your report</h2>
-    <pre class="report" id="reportOut">Tap “Build report” — it uses the total and prices above.</pre>
-    <div class="btnrow"><button id="buildBtn" type="button">Build report</button></div>
+  <section class="card" aria-label="Your message">
+    <h2>Your message</h2>
+    <pre class="report" id="reportOut">Tap “Build message to Beauzo” after you decide — it uses the choice above.</pre>
     <div class="btnrow">
       <button class="ghost" id="copyBtn" type="button">Copy</button>
       <button class="ghost" id="shareBtn" type="button">Share</button>
@@ -179,22 +178,20 @@
   </section>
 
   <section class="card" aria-label="History">
-    <h2>Past reports</h2>
-    <div id="historyList"><div class="hint">No saved reports yet.</div></div>
+    <h2>Past decisions</h2>
+    <div id="historyList"><div class="hint">Nothing recorded yet.</div></div>
   </section>
   <!-- ═══════════ END APP BODY ═══════════ -->
 
   <footer>
-    GA cannot log into Schwab automatically — enter the total from the Schwab app.<br>
-    This is a 1-tap reporter, not a background agent.<br>
-    <a href="https://nathanaelsommer-collab.github.io/ga/">nathanaelsommer-collab.github.io/ga/</a><br>
-    Pending: Robinhood consolidation ~$1,863 (sell → ACH to bank → Schwab, not ACATS).<br>
-    SOXL: 0 shares — wash-sale window clears Dec 5.
+    Allianz plan EUSP2608942799 — bought Nov 5, 2026, for the Nov 21 Anchorage trip (cancelled Nov 17).<br>
+    No January flight is booked yet — the Delta ticket is now an eCredit; check My Wallet on delta.com for its amount and expiry.<br>
+    <a href="https://nathanaelsommer-collab.github.io/ga/">nathanaelsommer-collab.github.io/ga/</a>
   </footer>
 </div>
 
 <script>
-// ── GA model shell: daily Schwab report ──────────
+// ── GA model shell: Allianz refund decision ──────────
 const $ = id => document.getElementById(id);
 const MONTHS=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 const DAYS=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
@@ -202,351 +199,115 @@ function fmtLong(d){ return DAYS[d.getDay()]+', '+MONTHS[d.getMonth()]+' '+d.get
 function esc(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 function num(v){ const n=parseFloat(String(v==null?'':v).replace(/[$,\s]/g,'')); return isFinite(n)?n:null; }
 function money(n){ return '$'+Number(n).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}); }
-function money0(n){ return '$'+Math.round(Number(n)).toLocaleString('en-US'); }
-function signed(n,dec){ const d=(dec==null?2:dec); const s=(n>=0?'+':'−'); return s+'$'+Math.abs(n).toLocaleString('en-US',{minimumFractionDigits:d,maximumFractionDigits:d}); }
-function signedPct(n){ return (n>=0?'+':'−')+Math.abs(n).toFixed(2)+'%'; }
 
-// ── Positions (Schwab ending 2410, Nov 6 2026) ──
-const FLIPS = {
-  TQQQ: { shares: 239, entry: 52.9999, half: 60.95, rest: 66.25, stop: 47.70 },
-  TNA:  { shares: 475, entry: 52.60,   half: 60.49, rest: 65.75, stop: 47.34 },
-};
-const VOO = { shares: 37, entry: 679.279 };
-const START = 75413, START_DATE = new Date(2026, 10, 5); // Nov 5 2026 (local midnight)
-const CAGR = 1.417, DEC5_TARGET = 77640;
+const PLAN = 'EUSP2608942799';
+const STORE_KEY = 'ga_allianz_v16';
+let lean = null;      // 'cancel' | 'move'
+let decision = null;  // 'cancelled' | 'asked-move'
 
-function daysSinceStart(date){
-  // UTC calendar days — DST transitions must not change the required path.
-  const a = Date.UTC(date.getFullYear(), date.getMonth(), date.getDate());
-  const b = Date.UTC(START_DATE.getFullYear(), START_DATE.getMonth(), START_DATE.getDate());
-  return Math.floor((a - b) / 86400000);
+function loadStore(){
+  try { return JSON.parse(localStorage.getItem(STORE_KEY) || '[]'); } catch(e){ return []; }
 }
-function requiredValue(date){
-  const days = Math.max(0, daysSinceStart(date));
-  return START * Math.pow(CAGR, days / 365);
+function saveStore(list){ try { localStorage.setItem(STORE_KEY, JSON.stringify(list)); } catch(e){} }
+
+function setLean(v){
+  lean = v;
+  $('optCancel').classList.toggle('sel', v === 'cancel');
+  $('optMove').classList.toggle('sel', v === 'move');
 }
-function flipGain(price, f){ return { dollars: price - f.entry, pct: (price - f.entry) / f.entry * 100 }; }
-function flipStatus(price, f){
-  if (price <= f.stop) return 'BELOW STOP';
-  if (price >= f.rest) return 'REST HIT';
-  if (price >= f.rest * 0.98) return 'NEAR REST';
-  if (price >= f.half) return 'HALF HIT';
-  if (price >= f.half * 0.98) return 'NEAR HALF';
-  if (price <= f.stop * 1.02) return 'NEAR STOP';
-  return 'OK';
-}
-function statusClass(s){
-  if (s === 'BELOW STOP') return 'bad';
-  if (s === 'NEAR STOP') return 'warn';
-  if (s === 'REST HIT' || s === 'HALF HIT') return 'good';
-  return 'ok';
-}
-function distLine(price, target){
-  const d = target - price;
-  return (d >= 0 ? '+' : '−') + '$' + Math.abs(d).toFixed(2) + ' (' + (d >= 0 ? '+' : '−') + Math.abs(d / price * 100).toFixed(1) + '%)';
+function setDecision(v){
+  decision = v;
+  $('decidedCancel').style.opacity = v === 'cancelled' ? '1' : '.55';
+  $('decidedMove').style.opacity = v === 'asked-move' ? '1' : '.55';
 }
 
-// ── Report builder (pure: takes values, returns text) ──
-function buildReport(o){
-  const date = o.date || new Date();
-  const req = requiredValue(date);
-  const total = o.total;
-  const gap = total - req;
+function buildMessage(){
+  const now = new Date();
+  const refund = num($('refundInput').value);
+  const notes = $('notesInput').value.trim();
   const lines = [];
-  lines.push('Daily Schwab report — ' + fmtLong(date));
-  lines.push('Total: ' + money(total) + ' (vs required ' + money(req) + ', ' + (gap >= 0 ? 'ahead ' + money(gap) : 'behind ' + money(Math.abs(gap))) + ')');
-  lines.push('Cash: ' + money(o.cash == null ? 10099.37 : o.cash));
-  ['TQQQ', 'TNA'].forEach(function(sym){
-    const f = FLIPS[sym];
-    const p = o.prices[sym];
-    if (p == null) {
-      lines.push(sym + ' ' + f.shares + ' @ — (no price entered) — half ' + money(f.half) + ' / rest ' + money(f.rest) + ' / stop ' + money(f.stop) + ' — —');
-    } else {
-      const g = flipGain(p, f);
-      lines.push(sym + ' ' + f.shares + ' @ ' + money(p) + ' (' + signed(g.dollars) + ', ' + signedPct(g.pct) + ') — half ' + money(f.half) + ' / rest ' + money(f.rest) + ' / stop ' + money(f.stop) + ' — ' + flipStatus(p, f));
-    }
-  });
-  const vp = o.prices.VOO;
-  if (vp == null) lines.push('VOO 37 @ — (HOLD)');
-  else {
-    const g = (vp - VOO.entry) / VOO.entry * 100;
-    lines.push('VOO 37 @ ' + money(vp) + ' (' + signed(vp - VOO.entry) + ', ' + signedPct(g) + ') (HOLD)');
-  }
-  const trades = (o.trades || []).filter(function(t){ return t && t !== 'No trades'; });
-  lines.push('Trades today: ' + ((o.trades || []).indexOf('No trades') >= 0 || trades.length === 0 ? 'None' : trades.join('; ')));
-  const lw = o.lastWin;
-  if (lw) {
-    const parts = lw.split('-');
-    const win = new Date(+parts[0], +parts[1] - 1, +parts[2]);
-    const rebuy = new Date(win.getFullYear(), win.getMonth(), win.getDate() + 7);
-    lines.push('Cooldown (Rule 8): last win ' + fmtLong(win) + ' — earliest re-buy ' + fmtLong(rebuy));
-  } else {
-    lines.push('Cooldown (Rule 8): no win recorded');
-  }
-  lines.push('Notes: ' + ((o.notes || '').trim() || '—'));
+  lines.push('Allianz — plan ' + PLAN);
+  if (decision === 'cancelled') lines.push('Cancelled it for a full refund.');
+  else if (decision === 'asked-move') lines.push('Asked Allianz to move the policy to the January trip instead of cancelling.');
+  else if (lean === 'cancel') lines.push('Leaning: cancel for a full refund.');
+  else if (lean === 'move') lines.push('Leaning: ask Allianz to move it to January.');
+  else lines.push('Decision not recorded yet.');
+  if (refund != null) lines.push('Refund confirmed: ' + money(refund) + '.');
+  if (notes) lines.push('Notes: ' + notes);
+  lines.push('— ' + fmtLong(now));
   return lines.join('\n');
 }
 
-// ── Live prices (optional, best-effort, never blocks) ──
-// Stooq first (per spec); Stooq now sits behind a JS browser check, so it
-// usually fails from fetch() — Yahoo via the AllOrigins CORS proxy is the
-// second attempt. Either way, manual entry is the reliable path.
-function parseStooq(csv){
-  const out = {};
-  const rows = String(csv || '').trim().split(/\r?\n/);
-  for (let i = 1; i < rows.length; i++) {
-    const c = rows[i].split(',');
-    if (c.length < 7) continue;
-    const sym = String(c[0] || '').replace(/\.us$/i, '').toUpperCase();
-    const close = parseFloat(c[6]);
-    if (sym && isFinite(close)) out[sym] = close;
-  }
-  return out;
-}
-function parseYahooQuote(json){
-  const out = {};
-  const res = json && json.quoteResponse && json.quoteResponse.result;
-  (res || []).forEach(function(r){
-    if (r && r.symbol && isFinite(r.regularMarketPrice)) out[String(r.symbol).toUpperCase()] = r.regularMarketPrice;
-  });
-  return out;
-}
-function fetchWithTimeout(url, ms, asJson){
-  const ctrl = (typeof AbortController !== 'undefined') ? new AbortController() : null;
-  const timer = setTimeout(function(){ if (ctrl) ctrl.abort(); }, ms);
-  const opts = ctrl ? { signal: ctrl.signal } : {};
-  return fetch(url, opts).then(function(r){
-    if (!r.ok) throw new Error('HTTP ' + r.status);
-    return asJson ? r.json() : r.text();
-  }).finally(function(){ clearTimeout(timer); });
-}
-function applyPrices(p){
-  let n = 0;
-  if (p.TQQQ) { $('tqqqPrice').value = Number(p.TQQQ).toFixed(2); n++; }
-  if (p.TNA) { $('tnaPrice').value = Number(p.TNA).toFixed(2); n++; }
-  if (p.VOO) { $('vooPrice').value = Number(p.VOO).toFixed(2); n++; }
-  if (n) { saveDraft(); renderAll(); }
-  return n;
-}
-function tryLivePrices(){
-  const msg = $('fetchMsg');
-  if (msg) msg.textContent = 'Fetching live prices…';
-  fetchWithTimeout('https://stooq.com/q/l/?s=tqqq.us,tna.us,voo.us&f=sd2t2ohlcv&h&e=csv', 5000, false)
-    .then(function(csv){ return applyPrices(parseStooq(csv)); })
-    .catch(function(){ return 0; })
-    .then(function(n){
-      if (n) {
-        if (msg) msg.textContent = 'Live prices loaded (Stooq, delayed) — check them against Schwab.';
-        return;
-      }
-      const yurl = 'https://api.allorigins.win/raw?url=' + encodeURIComponent('https://query1.finance.yahoo.com/v7/finance/quote?symbols=TQQQ,TNA,VOO');
-      return fetchWithTimeout(yurl, 5000, true)
-        .then(function(json){ return applyPrices(parseYahooQuote(json)); })
-        .catch(function(){ return 0; })
-        .then(function(n2){
-          if (msg) msg.textContent = n2 ? 'Live prices loaded (Yahoo, delayed) — check them against Schwab.' : 'Live prices unavailable — enter manually.';
-        });
-    });
-}
-
-// ── History (localStorage ga_reports, cap 30) ──
-function loadHistory(){
-  try { return JSON.parse(localStorage.getItem('ga_reports') || '[]'); } catch (e) { return []; }
-}
-function saveHistory(list){
-  try { localStorage.setItem('ga_reports', JSON.stringify(list.slice(0, 30))); } catch (e) {}
-}
 function renderHistory(){
-  const el = $('historyList');
-  if (!el) return;
-  const list = loadHistory();
-  if (!list.length) { el.innerHTML = '<div class="hint">No saved reports yet.</div>'; return; }
-  el.innerHTML = list.map(function(r, i){
-    return '<div class="histrow" data-i="' + i + '"><span class="d">' + esc(r.dateLabel) + '</span><span class="v">' + esc(money0(r.total)) + '</span></div>';
-  }).join('');
-  const rows = el.querySelectorAll ? el.querySelectorAll('.histrow') : [];
-  rows.forEach(function(row){
-    row.addEventListener('click', function(){
-      const r = loadHistory()[parseInt(row.getAttribute('data-i'), 10)];
-      if (r) { $('reportOut').textContent = r.text; $('saveMsg').textContent = 'Loaded report from ' + r.dateLabel + ' — Copy / Share to send it again.'; }
-    });
+  const list = loadStore();
+  const box = $('historyList');
+  if (!list.length){ box.innerHTML = '<div class="hint">Nothing recorded yet.</div>'; return; }
+  box.innerHTML = '';
+  list.slice().reverse().forEach((item) => {
+    const row = document.createElement('div');
+    row.className = 'histrow';
+    const d = new Date(item.ts);
+    row.innerHTML = '<span class="d">' + esc(item.label) + '</span><span class="v">' +
+      esc(MONTHS[d.getMonth()] + ' ' + d.getDate()) +
+      (item.refund != null ? ' · ' + esc(money(item.refund)) : '') + '</span>';
+    row.addEventListener('click', () => { $('reportOut').textContent = item.text; });
+    box.appendChild(row);
   });
 }
 
-// ── Draft persistence ──
-function saveDraft(){
-  try {
-    localStorage.setItem('ga_daily_draft', JSON.stringify({
-      total: $('totalInput').value, cash: $('cashInput').value,
-      tqqq: $('tqqqPrice').value, tna: $('tnaPrice').value, voo: $('vooPrice').value,
-      lastWin: $('lastWinDate') ? $('lastWinDate').value : '',
-      notes: $('notesInput').value,
-    }));
-  } catch (e) {}
-}
-function loadDraft(){
-  try {
-    const d = JSON.parse(localStorage.getItem('ga_daily_draft') || 'null');
-    if (!d) return;
-    if (d.total) $('totalInput').value = d.total;
-    if (d.cash) $('cashInput').value = d.cash;
-    if (d.tqqq) $('tqqqPrice').value = d.tqqq;
-    if (d.tna) $('tnaPrice').value = d.tna;
-    if (d.voo) $('vooPrice').value = d.voo;
-    if (d.lastWin && $('lastWinDate')) $('lastWinDate').value = d.lastWin;
-    if (d.notes) $('notesInput').value = d.notes;
-  } catch (e) {}
-}
+$('todayLine').textContent = fmtLong(new Date()) + ' — Allianz free-look window closes today or tomorrow.';
 
-// ── Rendering ──
-function renderFlips(){
-  const el = $('flipList');
-  if (!el) return;
-  const rows = ['TQQQ', 'TNA'].map(function(sym){
-    const f = FLIPS[sym];
-    const p = num($(sym === 'TQQQ' ? 'tqqqPrice' : 'tnaPrice').value);
-    if (p == null) {
-      return '<div class="fliprow"><div class="top"><span class="sym">' + sym + ' ' + f.shares + ' sh</span><span class="pill ok">NO PRICE</span></div>' +
-        '<div class="lvl">Entry ' + money(f.entry) + ' · Half ' + money(f.half) + ' · Rest ' + money(f.rest) + ' · Stop ' + money(f.stop) + '</div></div>';
-    }
-    const g = flipGain(p, f), st = flipStatus(p, f);
-    return '<div class="fliprow"><div class="top"><span class="sym">' + sym + ' ' + f.shares + ' sh @ ' + money(p) + '</span><span class="pill ' + statusClass(st) + '">' + st + '</span></div>' +
-      '<div class="lvl">' + signed(g.dollars) + ' (' + signedPct(g.pct) + ') vs entry ' + money(f.entry) + '</div>' +
-      '<div class="lvl">Half ' + money(f.half) + ' ' + distLine(p, f.half) + ' · Rest ' + money(f.rest) + ' ' + distLine(p, f.rest) + ' · Stop ' + money(f.stop) + ' ' + distLine(p, f.stop) + '</div></div>';
-  }).join('');
-  const vp = num($('vooPrice').value);
-  const vooRow = vp == null
-    ? '<div class="fliprow"><div class="top"><span class="sym">VOO 37 sh</span><span class="pill ok">HOLD</span></div><div class="lvl">Entry ' + money(VOO.entry) + ' · No stop · No flip exit</div></div>'
-    : '<div class="fliprow"><div class="top"><span class="sym">VOO 37 sh @ ' + money(vp) + '</span><span class="pill ok">HOLD</span></div><div class="lvl">' + signed(vp - VOO.entry) + ' (' + signedPct((vp - VOO.entry) / VOO.entry * 100) + ') vs entry ' + money(VOO.entry) + ' · No stop · No flip exit</div></div>';
-  el.innerHTML = rows + vooRow;
-}
-function renderPath(){
-  const total = num($('totalInput').value);
-  const req = requiredValue(new Date());
-  const line = $('pathLine'), sub = $('pathSub');
-  if (!line) return;
-  if (total == null) {
-    line.textContent = 'Enter the account total above.';
-    if (sub) sub.textContent = 'Required today: ' + money(req) + ' · Dec 5 target: ' + money(DEC5_TARGET) + ' · Nov 5, 2027 required: $106,860';
-    return;
-  }
-  const gap = total - req;
-  line.textContent = (gap >= 0 ? 'Ahead ' + money(gap) : 'Behind ' + money(Math.abs(gap))) + ' of path (' + (gap >= 0 ? '+' : '−') + Math.abs(gap / req * 100).toFixed(2) + '%)';
-  if (sub) sub.textContent = 'Required today: ' + money(req) + ' · Dec 5 target: ' + money(DEC5_TARGET) + ' · Nov 5, 2027 required: $106,860';
-}
-function renderCooldown(){
-  const line = $('cooldownLine'), sub = $('cooldownSub');
-  if (!line) return;
-  const v = $('lastWinDate') ? $('lastWinDate').value : '';
-  if (!v) {
-    line.textContent = 'No win recorded — no cooldown.';
-    if (sub) sub.textContent = 'Enter the date of your last winning exit to start the 7-day clock.';
-    return;
-  }
-  const parts = v.split('-');
-  const win = new Date(+parts[0], +parts[1] - 1, +parts[2]);
-  const rebuy = new Date(win.getFullYear(), win.getMonth(), win.getDate() + 7);
-  const today = new Date();
-  const todayMid = new Date(today.getFullYear(), today.getMonth(), today.getDate());
-  const rebuyMid = new Date(rebuy.getFullYear(), rebuy.getMonth(), rebuy.getDate());
-  const daysLeft = Math.round((rebuyMid - todayMid) / 86400000);
-  if (daysLeft > 0) {
-    line.textContent = 'Cooling off — no new buys until ' + MONTHS[rebuy.getMonth()] + ' ' + rebuy.getDate() + ' (' + daysLeft + ' day' + (daysLeft === 1 ? '' : 's') + ' left).';
-    if (sub) sub.textContent = 'Last win: ' + fmtLong(win) + ' · Earliest re-buy: ' + fmtLong(rebuy) + ' · Then checkpoint with Beauzo before buying.';
-  } else {
-    line.textContent = 'Clear — cooldown over. Checkpoint with Beauzo before the next buy.';
-    if (sub) sub.textContent = 'Last win: ' + fmtLong(win) + ' · Earliest re-buy was ' + fmtLong(rebuy) + ' · First position after a win is half size.';
-  }
-}
-function renderAll(){
-  const now = new Date();
-  if ($('todayLine')) $('todayLine').textContent = fmtLong(now);
-  renderFlips();
-  renderPath();
-  renderCooldown();
-}
-function collectReportInput(){
-  const trades = [];
-  const boxes = document.querySelectorAll ? document.querySelectorAll('input[name="trade"]:checked') : [];
-  boxes.forEach(function(b){ trades.push(b.value); });
-  return {
-    date: new Date(),
-    total: num($('totalInput').value),
-    cash: num($('cashInput').value),
-    prices: { TQQQ: num($('tqqqPrice').value), TNA: num($('tnaPrice').value), VOO: num($('vooPrice').value) },
-    lastWin: $('lastWinDate') ? $('lastWinDate').value : '',
-    trades: trades,
-    notes: $('notesInput').value,
-  };
-}
-function doBuild(){
-  const inp = collectReportInput();
-  if (inp.total == null) {
-    $('reportOut').textContent = 'Enter the account total first — that is the one required number.';
-    return null;
-  }
-  const text = buildReport(inp);
-  $('reportOut').textContent = text;
-  $('saveMsg').textContent = '';
-  saveDraft();
-  return text;
-}
-function copyText(text, okMsg){
-  function fallback(){
+$('copyPlanBtn').addEventListener('click', async () => {
+  const done = () => { $('copyMsg').textContent = 'Plan number copied.'; };
+  try { await navigator.clipboard.writeText(PLAN); done(); }
+  catch(e){
     const ta = document.createElement('textarea');
-    ta.value = text; document.body.appendChild(ta); ta.select();
-    try { document.execCommand('copy'); } catch (e) {}
+    ta.value = PLAN; document.body.appendChild(ta); ta.select();
+    try { document.execCommand('copy'); done(); } catch(e2){ $('copyMsg').textContent = 'Copy failed — plan: ' + PLAN; }
     document.body.removeChild(ta);
   }
-  if (navigator.clipboard && navigator.clipboard.writeText) {
-    navigator.clipboard.writeText(text).then(function(){ $('saveMsg').textContent = okMsg; })
-      .catch(function(){ fallback(); $('saveMsg').textContent = okMsg; });
-  } else { fallback(); $('saveMsg').textContent = okMsg; }
-}
+});
 
-// ── Init ──
-loadDraft();
-renderAll();
-['totalInput','cashInput','tqqqPrice','tnaPrice','vooPrice','notesInput','lastWinDate'].forEach(function(id){
-  const el = $(id);
-  if (el) el.addEventListener('input', function(){ saveDraft(); renderAll(); });
+$('optCancel').addEventListener('click', () => setLean('cancel'));
+$('optMove').addEventListener('click', () => setLean('move'));
+$('decidedCancel').addEventListener('click', () => setDecision('cancelled'));
+$('decidedMove').addEventListener('click', () => setDecision('asked-move'));
+
+$('buildBtn').addEventListener('click', () => {
+  $('reportOut').textContent = buildMessage();
 });
-if ($('fetchBtn')) $('fetchBtn').addEventListener('click', tryLivePrices);
-if ($('buildBtn')) $('buildBtn').addEventListener('click', doBuild);
-if ($('copyBtn')) $('copyBtn').addEventListener('click', function(){
-  const t = $('reportOut').textContent;
-  if (!t || t.indexOf('Daily Schwab report') !== 0) { $('saveMsg').textContent = 'Build the report first.'; return; }
-  copyText(t, 'Copied — paste it into Muse.');
+
+$('copyBtn').addEventListener('click', async () => {
+  const text = $('reportOut').textContent;
+  try { await navigator.clipboard.writeText(text); $('saveMsg').textContent = 'Copied.'; }
+  catch(e){ $('saveMsg').textContent = 'Copy failed — select the text manually.'; }
 });
-if ($('shareBtn')) $('shareBtn').addEventListener('click', function(){
-  const t = $('reportOut').textContent;
-  if (!t || t.indexOf('Daily Schwab report') !== 0) { $('saveMsg').textContent = 'Build the report first.'; return; }
-  if (navigator.share) {
-    navigator.share({ title: 'Daily Schwab report', text: t }).catch(function(){});
+
+$('shareBtn').addEventListener('click', async () => {
+  const text = $('reportOut').textContent;
+  if (navigator.share){
+    try { await navigator.share({ text }); } catch(e){}
   } else {
-    copyText(t, 'Sharing is not available here — copied instead. Paste it into Muse.');
+    try { await navigator.clipboard.writeText(text); $('saveMsg').textContent = 'Share not available — copied instead.'; }
+    catch(e){ $('saveMsg').textContent = 'Share not available.'; }
   }
 });
-if ($('saveBtn')) $('saveBtn').addEventListener('click', function(){
-  const text = doBuild();
-  if (!text) return;
-  const list = loadHistory();
-  list.unshift({ dateLabel: fmtLong(new Date()), total: num($('totalInput').value), text: text });
-  saveHistory(list);
-  renderHistory();
-  $('saveMsg').textContent = 'Saved. Copy / Share it to send it to Beauzo.';
-});
-renderHistory();
 
-if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => {
-    navigator.serviceWorker.register('./service-worker.js').catch(() => {});
-  });
-  // When a newer app version takes over, reload so the new function shows immediately.
-  navigator.serviceWorker.addEventListener('controllerchange', () => {
-    location.reload();
-  });
-}
+$('saveBtn').addEventListener('click', () => {
+  const text = $('reportOut').textContent;
+  if (!text || text.indexOf('Tap') === 0){ $('saveMsg').textContent = 'Build the message first.'; return; }
+  const list = loadStore();
+  const label = decision === 'cancelled' ? 'Cancelled for refund'
+    : decision === 'asked-move' ? 'Asked to move to January'
+    : lean === 'cancel' ? 'Leaning: cancel'
+    : lean === 'move' ? 'Leaning: move to January' : 'Allianz note';
+  list.push({ ts: Date.now(), label, refund: num($('refundInput').value), text });
+  saveStore(list.slice(-30));
+  renderHistory();
+  $('saveMsg').textContent = 'Saved.';
+});
+
+renderHistory();
 </script>
 </body>
 </html>
