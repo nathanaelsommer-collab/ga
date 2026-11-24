@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>GA</title>
 <meta name="theme-color" content="#08111e">
-<meta name="description" content="GA — Allianz refund decision.">
+<meta name="description" content="GA — big ticker screen: SOXL, SOXS, VOO, NVDA, refreshed every minute.">
 <link rel="manifest" href="./manifest.json">
 <link rel="icon" type="image/svg+xml" href="./favicon.svg">
 <!--
@@ -83,31 +83,19 @@
   .big{font-size:20px;font-weight:700;}
   .muted{color:var(--dim);}
 
-  /* ── Allianz decision ── */
-  .deadline{
-    background:#3a2a05; border:1px solid #fbbf24; border-radius:12px;
-    padding:14px; font-size:16px; line-height:1.55; margin-bottom:12px;
+  /* ── Ticker screen (ga-v17) ── */
+  .tick{
+    background:var(--card); border:1px solid var(--line); border-radius:18px;
+    padding:16px 20px 18px; margin-bottom:14px;
   }
-  .deadline b{color:#fbbf24;}
-  .fact{display:flex;justify-content:space-between;gap:10px;padding:9px 0;border-bottom:1px solid var(--line);font-size:15px;line-height:1.45;}
-  .fact:last-child{border-bottom:none;}
-  .fact .k{color:var(--dim);flex-shrink:0;}
-  .fact .v{text-align:right;font-weight:600;}
-  .mono{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:16px;letter-spacing:1px;}
-  .opt{
-    display:block;width:100%;text-align:left;background:#0a1526;color:var(--text);
-    border:2px solid var(--line);border-radius:14px;padding:16px;margin:0 0 12px;
-    font-size:16px;font-weight:400;line-height:1.5;cursor:pointer;
-  }
-  .opt b{display:block;font-size:18px;margin-bottom:4px;}
-  .opt .why{color:var(--dim);font-size:14px;}
-  .opt.sel{border-color:var(--accent);background:#0d2138;}
-  .opt.sel b::after{content:"  ✓";color:var(--accent);}
-  .callbtn{display:block;text-align:center;text-decoration:none;background:#22c55e;color:#04121f;font-weight:700;font-size:18px;border-radius:12px;padding:16px;margin-top:12px;}
-  .callbtn:active{transform:scale(.98);}
-  .mailbtn{display:block;text-align:center;text-decoration:none;background:transparent;color:var(--accent);border:1px solid var(--line);font-weight:600;font-size:15px;border-radius:12px;padding:13px;margin-top:10px;}
-  .checkline{display:flex;align-items:center;gap:8px;font-size:15px;color:var(--text);padding:6px 0;}
-  .checkline::before{content:"✓";color:#22c55e;font-weight:700;}
+  .tick .sym{font-size:30px;font-weight:800;letter-spacing:2px;}
+  .tick .sess{float:right;font-size:13px;color:var(--dim);letter-spacing:1px;text-transform:uppercase;padding-top:10px;}
+  .tick .price{font-size:68px;font-weight:800;line-height:1.05;letter-spacing:-1px;font-variant-numeric:tabular-nums;margin-top:2px;}
+  .tick .chg{font-size:30px;font-weight:700;margin-top:6px;font-variant-numeric:tabular-nums;}
+  .up{color:#22c55e;}
+  .down{color:#f87171;}
+  .flat{color:var(--dim);}
+  .status{text-align:center;color:var(--dim);font-size:14px;margin-top:4px;line-height:1.7;}
 </style>
 </head>
 <body>
@@ -118,196 +106,177 @@
   </header>
 
   <!-- ═══════════ APP BODY — replace everything in this block ═══════════ -->
-  <section class="card" aria-label="Decide today">
-    <h2>✈️ Allianz — decide today</h2>
-    <div class="today" id="todayLine"></div>
-    <div class="deadline"><b>Today is the safe day to act.</b><br>
-    The 15-day free-look window runs from the Nov 5 purchase — Nov 5 + 15 days is Fri Nov 20, but counting inclusively it could close <b>today, Thu Nov 19</b>. Tomorrow is the outside date at best.</div>
-    <div class="fact"><span class="k">Plan</span><span class="v mono" id="planNo">EUSP2608942799</span></div>
-    <div class="fact"><span class="k">Policy</span><span class="v">Dom Airline w RTW 3</span></div>
-    <div class="fact"><span class="k">Bought</span><span class="v">Nov 5, 2026</span></div>
-    <div class="fact"><span class="k">Trip dates</span><span class="v">Nov 21, 2026 only</span></div>
-    <div class="fact"><span class="k">Trip status</span><span class="v">Cancelled Nov 17 — never started</span></div>
-    <div class="row"><button class="ghost" id="copyPlanBtn" type="button">Copy plan number</button></div>
-    <div class="hint" id="copyMsg"></div>
-    <div class="sub" style="margin-top:12px;">Why a refund looks likely:</div>
-    <div class="checkline">Trip was cancelled, never started</div>
-    <div class="checkline">No claim filed on the policy</div>
-    <div class="checkline">Still inside the 15-day free-look window</div>
-    <div class="hint">The premium amount was not in Allianz's email — the refund figure comes from Allianz when you cancel. Nothing here states a dollar amount.</div>
-  </section>
+  <div id="tickList"></div>
 
-  <section class="card" aria-label="Two ways to play it">
-    <h2>Two ways to play it</h2>
-    <button class="opt" id="optCancel" type="button">
-      <b>A — Cancel for a full refund</b>
-      <span class="why">Clean exit. Trip's gone, policy never used — get the premium back and be done with it.</span>
-    </button>
-    <button class="opt" id="optMove" type="button">
-      <b>B — Ask Allianz to move it to January</b>
-      <span class="why">If the same cover can shift to the Jan 8 Anchorage trip, that could be worth more than the refund. Ask first — don't assume it transfers.</span>
-    </button>
-    <div class="hint">Tap one to mark your lean. Either way, the contact is the same:</div>
-    <a class="callbtn" href="tel:+18668894569">Call Allianz — 1-866-889-4569</a>
-    <a class="mailbtn" href="mailto:customerservice@allianzassistance.com?subject=Plan%20EUSP2608942799%20—%20cancelled%20Nov%2021%20trip">Email — customerservice@allianzassistance.com</a>
-    <div class="hint">Or cancel in the Allyz app / My Plan. Quote plan <span class="mono">EUSP2608942799</span> either way.</div>
-  </section>
-
-  <section class="card" aria-label="What I decided">
-    <h2>What I decided</h2>
-    <div class="btnrow" style="margin-top:0;">
-      <button id="decidedCancel" type="button">I cancelled it</button>
-      <button id="decidedMove" type="button" style="background:#22c55e;">I asked to move it</button>
-    </div>
-    <label for="refundInput">Refund confirmed ($) — only if Allianz gave you a figure</label>
-    <input id="refundInput" inputmode="decimal" autocomplete="off" placeholder="e.g. 89.00 — leave blank if unknown" type="text">
-    <label for="notesInput">Notes — who you spoke to, confirmation number, what they said</label>
-    <textarea id="notesInput" placeholder="e.g. Spoke to Maria, conf #…, refund in 5–7 business days…"></textarea>
-    <div class="row"><button id="buildBtn" type="button">Build message to Beauzo</button></div>
-  </section>
-
-  <section class="card" aria-label="Your message">
-    <h2>Your message</h2>
-    <pre class="report" id="reportOut">Tap “Build message to Beauzo” after you decide — it uses the choice above.</pre>
-    <div class="btnrow">
-      <button class="ghost" id="copyBtn" type="button">Copy</button>
-      <button class="ghost" id="shareBtn" type="button">Share</button>
-      <button class="ghost" id="saveBtn" type="button">Save</button>
-    </div>
-    <div class="hint" id="saveMsg"></div>
-  </section>
-
-  <section class="card" aria-label="History">
-    <h2>Past decisions</h2>
-    <div id="historyList"><div class="hint">Nothing recorded yet.</div></div>
-  </section>
+  <div class="status" id="statusLine">Loading…</div>
+  <div class="row"><button class="ghost" id="refreshBtn" type="button">↻ Refresh now</button></div>
+  <div class="status">Refreshes every 60 seconds.<br>Prices are delayed — check Schwab for the live mark.</div>
   <!-- ═══════════ END APP BODY ═══════════ -->
 
   <footer>
-    Allianz plan EUSP2608942799 — bought Nov 5, 2026, for the Nov 21 Anchorage trip (cancelled Nov 17).<br>
-    No January flight is booked yet — the Delta ticket is now an eCredit; check My Wallet on delta.com for its amount and expiry.<br>
+    SOXL · SOXS · VOO · NVDA<br>
     <a href="https://nathanaelsommer-collab.github.io/ga/">nathanaelsommer-collab.github.io/ga/</a>
   </footer>
 </div>
 
 <script>
-// ── GA model shell: Allianz refund decision ──────────
+// ── GA model shell: big ticker screen (ga-v17) ──────────
+// SOXL, SOXS, VOO, NVDA. Large font, one row each, refreshed every 60s.
+// Free quote sources are flaky — try them in order, keep the last good
+// values on screen, and say plainly when a refresh couldn't get through.
 const $ = id => document.getElementById(id);
-const MONTHS=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-const DAYS=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
-function fmtLong(d){ return DAYS[d.getDay()]+', '+MONTHS[d.getMonth()]+' '+d.getDate()+', '+d.getFullYear(); }
+const SYMBOLS = ['SOXL', 'SOXS', 'VOO', 'NVDA'];
+const STORE_KEY = 'ga_tickers_v17';
+const YAHOO_URL = 'https://query1.finance.yahoo.com/v7/finance/quote?symbols=' + SYMBOLS.join(',');
+const PROXY_URL = 'https://api.allorigins.win/raw?url=' + encodeURIComponent(YAHOO_URL);
+const STOOQ_URL = 'https://stooq.com/q/l/?s=soxl.us,soxs.us,voo.us,nvda.us&f=sd2t2ohlcv&h&e=csv';
+
 function esc(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
-function num(v){ const n=parseFloat(String(v==null?'':v).replace(/[$,\s]/g,'')); return isFinite(n)?n:null; }
-function money(n){ return '$'+Number(n).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}); }
-
-const PLAN = 'EUSP2608942799';
-const STORE_KEY = 'ga_allianz_v16';
-let lean = null;      // 'cancel' | 'move'
-let decision = null;  // 'cancelled' | 'asked-move'
-
-function loadStore(){
-  try { return JSON.parse(localStorage.getItem(STORE_KEY) || '[]'); } catch(e){ return []; }
-}
-function saveStore(list){ try { localStorage.setItem(STORE_KEY, JSON.stringify(list)); } catch(e){} }
-
-function setLean(v){
-  lean = v;
-  $('optCancel').classList.toggle('sel', v === 'cancel');
-  $('optMove').classList.toggle('sel', v === 'move');
-}
-function setDecision(v){
-  decision = v;
-  $('decidedCancel').style.opacity = v === 'cancelled' ? '1' : '.55';
-  $('decidedMove').style.opacity = v === 'asked-move' ? '1' : '.55';
+function fmtPrice(n){ return Number(n).toFixed(2); }
+function fmtChg(n){ return (n >= 0 ? '+' : '−') + '$' + Math.abs(n).toFixed(2); }
+function fmtPct(n){ return (n >= 0 ? '+' : '−') + Math.abs(n).toFixed(2) + '%'; }
+function fmtTime(d){
+  let h = d.getHours(); const m = String(d.getMinutes()).padStart(2, '0'); const s = String(d.getSeconds()).padStart(2, '0');
+  const ap = h >= 12 ? 'PM' : 'AM'; h = h % 12 || 12;
+  return h + ':' + m + ':' + s + ' ' + ap;
 }
 
-function buildMessage(){
-  const now = new Date();
-  const refund = num($('refundInput').value);
-  const notes = $('notesInput').value.trim();
-  const lines = [];
-  lines.push('Allianz — plan ' + PLAN);
-  if (decision === 'cancelled') lines.push('Cancelled it for a full refund.');
-  else if (decision === 'asked-move') lines.push('Asked Allianz to move the policy to the January trip instead of cancelling.');
-  else if (lean === 'cancel') lines.push('Leaning: cancel for a full refund.');
-  else if (lean === 'move') lines.push('Leaning: ask Allianz to move it to January.');
-  else lines.push('Decision not recorded yet.');
-  if (refund != null) lines.push('Refund confirmed: ' + money(refund) + '.');
-  if (notes) lines.push('Notes: ' + notes);
-  lines.push('— ' + fmtLong(now));
-  return lines.join('\n');
+// Pick the price to show for a Yahoo quote row: pre-market / after-hours
+// when the market is in that session, otherwise the regular price.
+// Change is always measured against the previous close.
+function pickDisplay(r){
+  const prev = r.regularMarketPreviousClose;
+  const state = r.marketState || '';
+  let price = r.regularMarketPrice;
+  let session = 'CLOSED';
+  if (state === 'PRE' && isFinite(r.preMarketPrice)) { price = r.preMarketPrice; session = 'PRE-MARKET'; }
+  else if (state === 'POST' && isFinite(r.postMarketPrice)) { price = r.postMarketPrice; session = 'AFTER HOURS'; }
+  else if (state === 'REGULAR') { session = 'MARKET OPEN'; }
+  else if (state === 'PRE') { session = 'PRE-MARKET'; }
+  else if (state === 'POST') { session = 'AFTER HOURS'; }
+  const chg = (isFinite(price) && isFinite(prev)) ? price - prev : null;
+  const pct = (chg != null && prev) ? chg / prev * 100 : null;
+  return { price: price, chg: chg, pct: pct, session: session };
 }
-
-function renderHistory(){
-  const list = loadStore();
-  const box = $('historyList');
-  if (!list.length){ box.innerHTML = '<div class="hint">Nothing recorded yet.</div>'; return; }
-  box.innerHTML = '';
-  list.slice().reverse().forEach((item) => {
-    const row = document.createElement('div');
-    row.className = 'histrow';
-    const d = new Date(item.ts);
-    row.innerHTML = '<span class="d">' + esc(item.label) + '</span><span class="v">' +
-      esc(MONTHS[d.getMonth()] + ' ' + d.getDate()) +
-      (item.refund != null ? ' · ' + esc(money(item.refund)) : '') + '</span>';
-    row.addEventListener('click', () => { $('reportOut').textContent = item.text; });
-    box.appendChild(row);
+function parseYahooQuote(json){
+  const out = {};
+  const res = json && json.quoteResponse && json.quoteResponse.result;
+  (res || []).forEach(function(r){
+    if (!r || !r.symbol) return;
+    const d = pickDisplay(r);
+    if (isFinite(d.price)) out[String(r.symbol).toUpperCase()] = d;
   });
+  return out;
+}
+// Stooq CSV: Symbol,Date,Time,Open,High,Low,Close,Volume — close only,
+// no change available, so chg/pct stay null and render as —.
+function parseStooq(csv){
+  const out = {};
+  const rows = String(csv || '').trim().split(/\r?\n/);
+  for (let i = 1; i < rows.length; i++) {
+    const c = rows[i].split(',');
+    if (c.length < 7) continue;
+    const sym = String(c[0] || '').replace(/\.us$/i, '').toUpperCase();
+    const close = parseFloat(c[6]);
+    if (sym && isFinite(close)) out[sym] = { price: close, chg: null, pct: null, session: 'DELAYED' };
+  }
+  return out;
 }
 
-$('todayLine').textContent = fmtLong(new Date()) + ' — Allianz free-look window closes today or tomorrow.';
+function fetchWithTimeout(url, ms, asJson){
+  const ctrl = (typeof AbortController !== 'undefined') ? new AbortController() : null;
+  const timer = setTimeout(function(){ if (ctrl) ctrl.abort(); }, ms);
+  const opts = ctrl ? { signal: ctrl.signal } : {};
+  return fetch(url, opts).then(function(r){
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    return asJson ? r.json() : r.text();
+  }).finally(function(){ clearTimeout(timer); });
+}
 
-$('copyPlanBtn').addEventListener('click', async () => {
-  const done = () => { $('copyMsg').textContent = 'Plan number copied.'; };
-  try { await navigator.clipboard.writeText(PLAN); done(); }
-  catch(e){
-    const ta = document.createElement('textarea');
-    ta.value = PLAN; document.body.appendChild(ta); ta.select();
-    try { document.execCommand('copy'); done(); } catch(e2){ $('copyMsg').textContent = 'Copy failed — plan: ' + PLAN; }
-    document.body.removeChild(ta);
-  }
-});
+function loadCache(){
+  try { return JSON.parse(localStorage.getItem(STORE_KEY) || 'null'); } catch(e){ return null; }
+}
+function saveCache(quotes){
+  try { localStorage.setItem(STORE_KEY, JSON.stringify({ ts: Date.now(), quotes: quotes })); } catch(e){}
+}
 
-$('optCancel').addEventListener('click', () => setLean('cancel'));
-$('optMove').addEventListener('click', () => setLean('move'));
-$('decidedCancel').addEventListener('click', () => setDecision('cancelled'));
-$('decidedMove').addEventListener('click', () => setDecision('asked-move'));
+function render(quotes, meta){
+  const box = $('tickList');
+  const rows = SYMBOLS.map(function(sym){
+    const q = quotes && quotes[sym];
+    const price = q ? fmtPrice(q.price) : '—';
+    let chgHtml;
+    if (q && q.chg != null && q.pct != null) {
+      const cls = q.chg > 0 ? 'up' : q.chg < 0 ? 'down' : 'flat';
+      chgHtml = '<div class="chg ' + cls + '">' + esc(fmtChg(q.chg)) + ' (' + esc(fmtPct(q.pct)) + ')</div>';
+    } else {
+      chgHtml = '<div class="chg flat">—</div>';
+    }
+    const sess = q ? q.session : '';
+    return '<div class="tick"><span class="sess">' + esc(sess) + '</span>' +
+      '<div class="sym">' + esc(sym) + '</div>' +
+      '<div class="price">' + esc(price) + '</div>' + chgHtml + '</div>';
+  }).join('');
+  box.innerHTML = rows;
+  if (meta) $('statusLine').textContent = meta;
+}
 
-$('buildBtn').addEventListener('click', () => {
-  $('reportOut').textContent = buildMessage();
-});
+function trySources(){
+  return fetchWithTimeout(YAHOO_URL, 5000, true)
+    .then(function(json){ return { quotes: parseYahooQuote(json), source: 'Yahoo' }; })
+    .catch(function(){
+      return fetchWithTimeout(PROXY_URL, 6000, true)
+        .then(function(json){ return { quotes: parseYahooQuote(json), source: 'Yahoo (proxy)' }; })
+        .catch(function(){
+          return fetchWithTimeout(STOOQ_URL, 5000, false)
+            .then(function(csv){ return { quotes: parseStooq(csv), source: 'Stooq' }; });
+        });
+    })
+    .then(function(res){
+      if (!res || !res.quotes || Object.keys(res.quotes).length === 0) throw new Error('no quotes');
+      return res;
+    });
+}
 
-$('copyBtn').addEventListener('click', async () => {
-  const text = $('reportOut').textContent;
-  try { await navigator.clipboard.writeText(text); $('saveMsg').textContent = 'Copied.'; }
-  catch(e){ $('saveMsg').textContent = 'Copy failed — select the text manually.'; }
-});
+let refreshing = false;
+function refresh(){
+  if (refreshing) return;
+  if (typeof fetch !== 'function') return;
+  refreshing = true;
+  $('statusLine').textContent = 'Updating…';
+  trySources().then(function(res){
+    saveCache(res.quotes);
+    render(res.quotes, 'Updated ' + fmtTime(new Date()) + ' · via ' + res.source);
+  }).catch(function(){
+    const cache = loadCache();
+    if (cache && cache.quotes) {
+      render(cache.quotes, 'Couldn’t refresh — showing last update ' + fmtTime(new Date(cache.ts)) + '. Tap ↻ to retry.');
+    } else {
+      render(null, 'Couldn’t load prices — tap ↻ Refresh now to retry.');
+    }
+  }).finally(function(){ refreshing = false; });
+}
 
-$('shareBtn').addEventListener('click', async () => {
-  const text = $('reportOut').textContent;
-  if (navigator.share){
-    try { await navigator.share({ text }); } catch(e){}
+$('refreshBtn').addEventListener('click', function(){ refresh(); });
+
+// Show the last good values instantly, then fetch fresh ones.
+(function init(){
+  const cache = loadCache();
+  if (cache && cache.quotes) {
+    render(cache.quotes, 'Last update ' + fmtTime(new Date(cache.ts)) + ' — refreshing…');
   } else {
-    try { await navigator.clipboard.writeText(text); $('saveMsg').textContent = 'Share not available — copied instead.'; }
-    catch(e){ $('saveMsg').textContent = 'Share not available.'; }
+    render(null, 'Loading…');
   }
-});
-
-$('saveBtn').addEventListener('click', () => {
-  const text = $('reportOut').textContent;
-  if (!text || text.indexOf('Tap') === 0){ $('saveMsg').textContent = 'Build the message first.'; return; }
-  const list = loadStore();
-  const label = decision === 'cancelled' ? 'Cancelled for refund'
-    : decision === 'asked-move' ? 'Asked to move to January'
-    : lean === 'cancel' ? 'Leaning: cancel'
-    : lean === 'move' ? 'Leaning: move to January' : 'Allianz note';
-  list.push({ ts: Date.now(), label, refund: num($('refundInput').value), text });
-  saveStore(list.slice(-30));
-  renderHistory();
-  $('saveMsg').textContent = 'Saved.';
-});
-
-renderHistory();
+  if (typeof fetch === 'function') {
+    refresh();
+    if (typeof setInterval === 'function') setInterval(refresh, 60000);
+    if (typeof document !== 'undefined' && document.addEventListener) {
+      document.addEventListener('visibilitychange', function(){
+        if (!document.hidden) refresh();
+      });
+    }
+  }
+})();
 </script>
 </body>
 </html>
