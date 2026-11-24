@@ -111,6 +111,12 @@
   <div class="status" id="statusLine">Loading…</div>
   <div class="row"><button class="ghost" id="refreshBtn" type="button">↻ Refresh now</button></div>
   <div class="status">Refreshes every 60 seconds.<br>Prices are delayed — check Schwab for the live mark.</div>
+
+  <section class="card" aria-label="Latest from you">
+    <h2>Latest from you</h2>
+    <div id="syncBody"><div class="hint">No synced info yet.</div></div>
+    <div class="hint" id="syncMeta"></div>
+  </section>
   <!-- ═══════════ END APP BODY ═══════════ -->
 
   <footer>
@@ -200,6 +206,55 @@ function saveCache(quotes){
   try { localStorage.setItem(STORE_KEY, JSON.stringify({ ts: Date.now(), quotes: quotes })); } catch(e){}
 }
 
+// ── Synced info (data.json) ──
+// The latest information the user has shared in chat, written to data.json
+// and pulled fresh on every refresh. Same-origin, so it loads reliably;
+// the service worker never caches it.
+const SYNC_KEY = 'ga_data_v18';
+function loadSyncCache(){
+  try { return JSON.parse(localStorage.getItem(SYNC_KEY) || 'null'); } catch(e){ return null; }
+}
+function saveSyncCache(d){
+  try { localStorage.setItem(SYNC_KEY, JSON.stringify(d)); } catch(e){}
+}
+function money2(n){ return Number(n).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
+function dataHtml(d){
+  if (!d) return '<div class="hint">No synced info yet.</div>';
+  const parts = [];
+  if (d.account) {
+    const a = d.account;
+    parts.push('<div class="fact"><span class="k">Account total</span><span class="v">' + esc(a.totalNote || ('$' + Number(a.total).toLocaleString('en-US'))) + '</span></div>');
+    if (a.cash != null) parts.push('<div class="fact"><span class="k">Cash</span><span class="v">$' + Number(a.cash).toLocaleString('en-US') + '</span></div>');
+    if (a.checkpoint != null) parts.push('<div class="fact"><span class="k">' + esc(a.checkpointDate || 'Checkpoint') + ' checkpoint</span><span class="v">$' + Number(a.checkpoint).toLocaleString('en-US') + (a.checkpointNote ? ' — ' + esc(a.checkpointNote) : '') + '</span></div>');
+  }
+  (d.holdings || []).forEach(function(h){
+    parts.push('<div class="fact"><span class="k">' + esc(h.sym) + ' · ' + esc(String(h.shares)) + ' sh @ $' + fmtPrice(h.price) + '</span><span class="v">$' + money2(h.value) + '</span></div>');
+  });
+  (d.flips || []).forEach(function(f){
+    parts.push('<div class="fact"><span class="k">' + esc(f.sym) + ' limit $' + fmtPrice(f.entry) + ' × ' + esc(String(f.shares)) + '</span><span class="v">' + esc(f.status || '') + '</span></div>');
+    parts.push('<div class="sub">Half $' + fmtPrice(f.half) + ' · rest $' + fmtPrice(f.rest) + ' · stop $' + fmtPrice(f.stop) + '</div>');
+  });
+  if (d.voo) parts.push('<div class="fact"><span class="k">VOO · ' + esc(String(d.voo.shares)) + ' sh</span><span class="v">' + esc(d.voo.status || '') + '</span></div>');
+  (d.notes || []).forEach(function(n){ parts.push('<div class="sub">• ' + esc(n) + '</div>'); });
+  return parts.join('');
+}
+function renderSync(d, meta){
+  $('syncBody').innerHTML = dataHtml(d);
+  if (meta) $('syncMeta').textContent = meta;
+}
+function fetchData(){
+  if (typeof fetch !== 'function') return;
+  fetchWithTimeout('./data.json', 5000, true).then(function(d){
+    if (!d) throw new Error('empty');
+    saveSyncCache(d);
+    renderSync(d, 'Updated ' + (d.updatedLabel || '') + ' · ' + (d.source || ''));
+  }).catch(function(){
+    const c = loadSyncCache();
+    if (c) renderSync(c, 'Showing last sync ' + (c.updatedLabel || '') + ' — couldn’t refresh.');
+    else renderSync(null, '');
+  });
+}
+
 function render(quotes, meta){
   const box = $('tickList');
   const rows = SYMBOLS.map(function(sym){
@@ -244,6 +299,7 @@ function refresh(){
   if (typeof fetch !== 'function') return;
   refreshing = true;
   $('statusLine').textContent = 'Updating…';
+  fetchData();
   trySources().then(function(res){
     saveCache(res.quotes);
     render(res.quotes, 'Updated ' + fmtTime(new Date()) + ' · via ' + res.source);
@@ -261,6 +317,8 @@ $('refreshBtn').addEventListener('click', function(){ refresh(); });
 
 // Show the last good values instantly, then fetch fresh ones.
 (function init(){
+  const sync = loadSyncCache();
+  renderSync(sync, sync ? 'Last sync ' + (sync.updatedLabel || '') + ' — refreshing…' : '');
   const cache = loadCache();
   if (cache && cache.quotes) {
     render(cache.quotes, 'Last update ' + fmtTime(new Date(cache.ts)) + ' — refreshing…');

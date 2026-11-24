@@ -1,4 +1,4 @@
-// Node test suite for the GA big ticker screen app (ga-v17).
+// Node test suite for the GA big ticker screen app (ga-v18).
 // Extracts the <script> from index.html, stubs the browser bits, and
 // asserts the quote parsing, session handling, and formatting.
 const fs = require('fs');
@@ -37,7 +37,8 @@ vm.runInContext(src, sandbox);
 const get = name => vm.runInContext(name, sandbox);
 const pickDisplay = get('pickDisplay'), parseYahooQuote = get('parseYahooQuote'),
       parseStooq = get('parseStooq'), fmtPrice = get('fmtPrice'),
-      fmtChg = get('fmtChg'), fmtPct = get('fmtPct'), SYMBOLS = get('SYMBOLS');
+      fmtChg = get('fmtChg'), fmtPct = get('fmtPct'), SYMBOLS = get('SYMBOLS'),
+      dataHtml = get('dataHtml');
 
 // ── Assertions ──
 let pass = 0, fail = 0;
@@ -125,8 +126,42 @@ ok(!html.includes('EUSP2608942799') && !html.includes('Allianz'),
   'Allianz body fully replaced');
 ok(html.includes('ga_tickers_v17') && html.includes('localStorage'), 'cache uses localStorage ga_tickers_v17');
 ok(html.includes('setInterval') && html.includes('60000'), '60-second refresh interval present');
-ok(fs.readFileSync(__dirname + '/service-worker.js', 'utf8').includes('ga-v17'), 'SW bumped to ga-v17');
-ok(!fs.readFileSync(__dirname + '/service-worker.js', 'utf8').includes('ga-v16'), 'no ga-v16 left in SW');
+ok(fs.readFileSync(__dirname + '/service-worker.js', 'utf8').includes('ga-v18'), 'SW bumped to ga-v18');
+ok(!fs.readFileSync(__dirname + '/service-worker.js', 'utf8').includes('ga-v17'), 'no ga-v17 left in SW');
+
+// 11. Synced info section (data.json)
+const sample = {
+  updatedLabel: 'Tue Nov 24, 7:00 AM CT', source: 'test',
+  account: { total: 77250, totalNote: '≈ $77,250 (pre-market)', cash: 75117,
+    checkpoint: 77640, checkpointDate: 'Dec 5, 2026', checkpointNote: '$390 below' },
+  holdings: [
+    { sym: 'NVDA', shares: 5, price: 156.30, value: 781.80 },
+    { sym: 'FCEL', shares: 133, price: 7.52, value: 1021.44 },
+  ],
+  flips: [
+    { sym: 'TQQQ', entry: 45.00, shares: 286, half: 51.75, rest: 56.25, stop: 40.50, status: 'Proposed — not placed' },
+  ],
+  voo: { shares: 37, exit: 680.42, status: 'Buy back 37 sh this morning — not confirmed yet' },
+  notes: ['SOXL $40 reclaimed Mon — wash-sale blocked to Dec 6'],
+};
+const dh = dataHtml(sample);
+ok(dh.indexOf('≈ $77,250 (pre-market)') >= 0, 'account total line');
+ok(dh.indexOf('$75,117') >= 0, 'cash line');
+ok(dh.indexOf('$77,640 — $390 below') >= 0, 'checkpoint line');
+ok(dh.indexOf('NVDA · 5 sh @ $156.30') >= 0 && dh.indexOf('$781.80') >= 0, 'NVDA holding line');
+ok(dh.indexOf('FCEL · 133 sh @ $7.52') >= 0 && dh.indexOf('$1,021.44') >= 0, 'FCEL holding line');
+ok(dh.indexOf('TQQQ limit $45.00 × 286') >= 0, 'flip limit line');
+ok(dh.indexOf('Half $51.75 · rest $56.25 · stop $40.50') >= 0, 'flip exits line');
+ok(dh.indexOf('Proposed — not placed') >= 0, 'flip status shown');
+ok(dh.indexOf('Buy back 37 sh this morning') >= 0, 'VOO line');
+ok(dh.indexOf('wash-sale blocked to Dec 6') >= 0, 'notes line');
+ok(dataHtml(null).indexOf('No synced info yet') >= 0, 'null data renders empty message');
+ok(els.syncBody && els.syncBody.innerHTML.indexOf('No synced info yet') >= 0,
+  'sync section renders empty message on init with no cache');
+ok(html.includes('data.json') && html.includes('ga_data_v18'),
+  'sync feed uses data.json + localStorage ga_data_v18');
+ok(fs.readFileSync(__dirname + '/service-worker.js', 'utf8').includes('data.json'),
+  'SW bypasses cache for data.json');
 
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);
