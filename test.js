@@ -126,8 +126,10 @@ ok(!html.includes('EUSP2608942799') && !html.includes('Allianz'),
   'Allianz body fully replaced');
 ok(html.includes('ga_tickers_v17') && html.includes('localStorage'), 'cache uses localStorage ga_tickers_v17');
 ok(html.includes('setInterval') && html.includes('60000'), '60-second refresh interval present');
-ok(fs.readFileSync(__dirname + '/service-worker.js', 'utf8').includes('ga-v18'), 'SW bumped to ga-v18');
-ok(!fs.readFileSync(__dirname + '/service-worker.js', 'utf8').includes('ga-v17'), 'no ga-v17 left in SW');
+ok(fs.readFileSync(__dirname + '/service-worker.js', 'utf8').includes('ga-v19'), 'SW bumped to ga-v19');
+ok(!fs.readFileSync(__dirname + '/service-worker.js', 'utf8').includes('ga-v18'), 'no ga-v18 left in SW');
+ok(html.includes('controllerchange') && html.includes('serviceWorker') && html.includes('r.update()'),
+  'app checks for SW updates itself and reloads on a new version');
 
 // 11. Synced info section (data.json)
 const sample = {

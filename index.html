@@ -293,6 +293,29 @@ function trySources(){
     });
 }
 
+// ── Self-update ──
+// The app keeps an offline copy on the phone (service worker). Without this,
+// a new version can sit on the server unnoticed while the old copy keeps
+// serving. So the app asks for updates itself on load and on every refresh;
+// when a new version takes over, the page reloads once to show it.
+let reloadingForUpdate = false;
+function checkForUpdate(){
+  try {
+    if (typeof navigator === 'undefined' || !('serviceWorker' in navigator)) return;
+    navigator.serviceWorker.getRegistration().then(function(r){
+      if (r) r.update();
+    }).catch(function(){});
+  } catch(e){}
+}
+function watchForUpdate(){
+  try {
+    if (typeof navigator === 'undefined' || !('serviceWorker' in navigator)) return;
+    navigator.serviceWorker.addEventListener('controllerchange', function(){
+      if (!reloadingForUpdate) { reloadingForUpdate = true; window.location.reload(); }
+    });
+  } catch(e){}
+}
+
 let refreshing = false;
 function refresh(){
   if (refreshing) return;
@@ -300,6 +323,7 @@ function refresh(){
   refreshing = true;
   $('statusLine').textContent = 'Updating…';
   fetchData();
+  checkForUpdate();
   trySources().then(function(res){
     saveCache(res.quotes);
     render(res.quotes, 'Updated ' + fmtTime(new Date()) + ' · via ' + res.source);
@@ -334,6 +358,8 @@ $('refreshBtn').addEventListener('click', function(){ refresh(); });
       });
     }
   }
+  watchForUpdate();
+  checkForUpdate();
 })();
 </script>
 </body>
