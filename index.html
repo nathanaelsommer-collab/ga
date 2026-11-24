@@ -276,21 +276,58 @@ function render(quotes, meta){
   if (meta) $('statusLine').textContent = meta;
 }
 
+// ── Server-side quotes (prices.json) ──
+// A GitHub Action fetches quotes every 5 minutes during market hours and
+// writes them to prices.json in this repo. The app reads its own file
+// (same-origin, always works) instead of asking free quote sites from the
+// browser, where Yahoo rate-limits (429), the AllOrigins proxy is blocked,
+// and Stooq is dead (404). The browser sources below stay as fallback.
+function parsePricesJson(d){
+  if (!d || !d.quotes) return null;
+  const quotes = {};
+  SYMBOLS.forEach(function(s){
+    const q = d.quotes[s];
+    if (!q || typeof q.price !== 'number') return;
+    // Same display shape as pickDisplay: session price, change measured
+    // against the previous close, session label.
+    const prev = q.prevClose;
+    let price = q.price, session = 'CLOSED';
+    if (q.state === 'PRE' && isFinite(q.preMarketPrice)) { price = q.preMarketPrice; session = 'PRE-MARKET'; }
+    else if (q.state === 'POST' && isFinite(q.postMarketPrice)) { price = q.postMarketPrice; session = 'AFTER HOURS'; }
+    else if (q.state === 'REGULAR') { session = 'MARKET OPEN'; }
+    else if (q.state === 'PRE') { session = 'PRE-MARKET'; }
+    else if (q.state === 'POST') { session = 'AFTER HOURS'; }
+    const chg = (isFinite(price) && isFinite(prev)) ? price - prev : null;
+    const pct = (chg != null && prev) ? chg / prev * 100 : null;
+    quotes[s] = { price: price, chg: chg, pct: pct, session: session };
+  });
+  if (Object.keys(quotes).length === 0) return null;
+  return { quotes: quotes, source: 'GitHub', updatedLabel: d.updatedLabel || '', updated: d.updated || '' };
+}
+function fetchPricesJson(){
+  return fetchWithTimeout('./prices.json', 5000, true)
+    .then(function(d){ return parsePricesJson(d); })
+    .catch(function(){ return null; });
+}
+
 function trySources(){
-  return fetchWithTimeout(YAHOO_URL, 5000, true)
-    .then(function(json){ return { quotes: parseYahooQuote(json), source: 'Yahoo' }; })
-    .catch(function(){
-      return fetchWithTimeout(PROXY_URL, 6000, true)
-        .then(function(json){ return { quotes: parseYahooQuote(json), source: 'Yahoo (proxy)' }; })
-        .catch(function(){
-          return fetchWithTimeout(STOOQ_URL, 5000, false)
-            .then(function(csv){ return { quotes: parseStooq(csv), source: 'Stooq' }; });
-        });
-    })
-    .then(function(res){
-      if (!res || !res.quotes || Object.keys(res.quotes).length === 0) throw new Error('no quotes');
-      return res;
-    });
+  return fetchPricesJson().then(function(p){
+    if (p) return p;
+    return fetchWithTimeout(YAHOO_URL, 5000, true)
+      .then(function(json){ return { quotes: parseYahooQuote(json), source: 'Yahoo' }; })
+      .catch(function(){
+        return fetchWithTimeout(PROXY_URL, 6000, true)
+          .then(function(json){ return { quotes: parseYahooQuote(json), source: 'Yahoo (proxy)' }; })
+          .catch(function(){
+            return fetchWithTimeout(STOOQ_URL, 5000, false)
+              .then(function(csv){ return { quotes: parseStooq(csv), source: 'Stooq' }; });
+          });
+      });
+  })
+  .then(function(res){
+    if (!res || !res.quotes || Object.keys(res.quotes).length === 0) throw new Error('no quotes');
+    return res;
+  });
 }
 
 // ── Self-update ──
@@ -326,7 +363,12 @@ function refresh(){
   checkForUpdate();
   trySources().then(function(res){
     saveCache(res.quotes);
-    render(res.quotes, 'Updated ' + fmtTime(new Date()) + ' · via ' + res.source);
+    let status = 'Updated ' + fmtTime(new Date()) + ' · via ' + res.source;
+    if (res.updated) {
+      const ageMin = Math.max(0, Math.round((Date.now() - Date.parse(res.updated)) / 60000));
+      status += ' · prices ' + (ageMin <= 1 ? 'just now' : ageMin + ' min old');
+    }
+    render(res.quotes, status);
   }).catch(function(){
     const cache = loadCache();
     if (cache && cache.quotes) {

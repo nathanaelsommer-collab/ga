@@ -1,0 +1,62 @@
+{
+ "quotes": {
+  "NVDA": {
+   "change": 39.52,
+   "changePercent": 31.48,
+   "postMarketChange": null,
+   "postMarketChangePercent": null,
+   "postMarketPrice": null,
+   "preMarketChange": -9.02,
+   "preMarketChangePercent": -5.47,
+   "preMarketPrice": 156.03,
+   "prevClose": 125.53,
+   "price": 165.05,
+   "state": "PRE",
+   "symbol": "NVDA"
+  },
+  "SOXL": {
+   "change": 12.33,
+   "changePercent": 39.93,
+   "postMarketChange": null,
+   "postMarketChangePercent": null,
+   "postMarketPrice": null,
+   "preMarketChange": -6.41,
+   "preMarketChangePercent": -14.83,
+   "preMarketPrice": 36.8,
+   "prevClose": 30.88,
+   "price": 43.21,
+   "state": "PRE",
+   "symbol": "SOXL"
+  },
+  "SOXS": {
+   "change": -34.05,
+   "changePercent": -40.95,
+   "postMarketChange": null,
+   "postMarketChangePercent": null,
+   "postMarketPrice": null,
+   "preMarketChange": 7.24,
+   "preMarketChangePercent": 14.74,
+   "preMarketPrice": 56.35,
+   "prevClose": 83.16,
+   "price": 49.11,
+   "state": "PRE",
+   "symbol": "SOXS"
+  },
+  "VOO": {
+   "change": 28.37,
+   "changePercent": 4.46,
+   "postMarketChange": null,
+   "postMarketChangePercent": null,
+   "postMarketPrice": null,
+   "preMarketChange": -7.55,
+   "preMarketChangePercent": -1.14,
+   "preMarketPrice": 656.36,
+   "prevClose": 635.54,
+   "price": 663.91,
+   "state": "PRE",
+   "symbol": "VOO"
+  }
+ },
+ "updated": "2026-11-24T13:09:55Z",
+ "updatedLabel": "Tue Nov 24, 7:09 AM CT"
+}

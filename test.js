@@ -1,4 +1,4 @@
-// Node test suite for the GA big ticker screen app (ga-v18).
+// Node test suite for the GA big ticker screen app (ga-v20).
 // Extracts the <script> from index.html, stubs the browser bits, and
 // asserts the quote parsing, session handling, and formatting.
 const fs = require('fs');
@@ -38,7 +38,7 @@ const get = name => vm.runInContext(name, sandbox);
 const pickDisplay = get('pickDisplay'), parseYahooQuote = get('parseYahooQuote'),
       parseStooq = get('parseStooq'), fmtPrice = get('fmtPrice'),
       fmtChg = get('fmtChg'), fmtPct = get('fmtPct'), SYMBOLS = get('SYMBOLS'),
-      dataHtml = get('dataHtml');
+      dataHtml = get('dataHtml'), parsePricesJson = get('parsePricesJson');
 
 // ── Assertions ──
 let pass = 0, fail = 0;
@@ -126,8 +126,8 @@ ok(!html.includes('EUSP2608942799') && !html.includes('Allianz'),
   'Allianz body fully replaced');
 ok(html.includes('ga_tickers_v17') && html.includes('localStorage'), 'cache uses localStorage ga_tickers_v17');
 ok(html.includes('setInterval') && html.includes('60000'), '60-second refresh interval present');
-ok(fs.readFileSync(__dirname + '/service-worker.js', 'utf8').includes('ga-v19'), 'SW bumped to ga-v19');
-ok(!fs.readFileSync(__dirname + '/service-worker.js', 'utf8').includes('ga-v18'), 'no ga-v18 left in SW');
+ok(fs.readFileSync(__dirname + '/service-worker.js', 'utf8').includes('ga-v20'), 'SW bumped to ga-v20');
+ok(!fs.readFileSync(__dirname + '/service-worker.js', 'utf8').includes('ga-v19'), 'no ga-v19 left in SW');
 ok(html.includes('controllerchange') && html.includes('serviceWorker') && html.includes('r.update()'),
   'app checks for SW updates itself and reloads on a new version');
 
@@ -164,6 +164,46 @@ ok(html.includes('data.json') && html.includes('ga_data_v18'),
   'sync feed uses data.json + localStorage ga_data_v18');
 ok(fs.readFileSync(__dirname + '/service-worker.js', 'utf8').includes('data.json'),
   'SW bypasses cache for data.json');
+ok(fs.readFileSync(__dirname + '/service-worker.js', 'utf8').includes('prices.json'),
+  'SW bypasses cache for prices.json too');
+
+// 12. Server-side quotes (prices.json)
+const pricesDoc = {
+  updated: '2026-11-24T13:09:55Z', updatedLabel: 'Tue Nov 24, 7:09 AM CT',
+  quotes: {
+    SOXL: { symbol: 'SOXL', price: 43.21, prevClose: 30.88, change: 12.33, changePercent: 39.93,
+      state: 'PRE', preMarketPrice: 36.80, preMarketChange: -6.41, preMarketChangePercent: -14.83,
+      postMarketPrice: null, postMarketChange: null, postMarketChangePercent: null },
+    SOXS: { symbol: 'SOXS', price: 49.11, prevClose: 83.16, change: -34.05, changePercent: -40.95,
+      state: 'PRE', preMarketPrice: 56.35, preMarketChange: 7.24, preMarketChangePercent: 14.74,
+      postMarketPrice: null, postMarketChange: null, postMarketChangePercent: null },
+    VOO: { symbol: 'VOO', price: 663.91, prevClose: 635.54, change: 28.37, changePercent: 4.46,
+      state: 'PRE', preMarketPrice: 656.36, preMarketChange: -7.55, preMarketChangePercent: -1.14,
+      postMarketPrice: null, postMarketChange: null, postMarketChangePercent: null },
+    NVDA: { symbol: 'NVDA', price: 165.05, prevClose: 125.53, change: 39.52, changePercent: 31.48,
+      state: 'PRE', preMarketPrice: 156.03, preMarketChange: -9.02, preMarketChangePercent: -5.47,
+      postMarketPrice: null, postMarketChange: null, postMarketChangePercent: null },
+  },
+};
+const pj = parsePricesJson(pricesDoc);
+ok(pj && pj.source === 'GitHub', 'prices.json parses to GitHub source');
+ok(pj && pj.updatedLabel === 'Tue Nov 24, 7:09 AM CT', 'prices.json keeps its update label');
+ok(pj && Object.keys(pj.quotes).length === 4, 'prices.json yields all 4 symbols');
+const soxlDisp = pj.quotes.SOXL;
+ok(soxlDisp.price === 36.80 && Math.abs(soxlDisp.chg - 5.92) < 0.01 && Math.abs(soxlDisp.pct - 19.17) < 0.01 && soxlDisp.session === 'PRE-MARKET',
+  'SOXL pre-market display from prices.json (36.80 / +5.92 / +19.17% vs Fri close)');
+const vooDisp = pj.quotes.VOO;
+ok(vooDisp.price === 656.36 && Math.abs(vooDisp.chg - 20.82) < 0.01 && vooDisp.session === 'PRE-MARKET',
+  'VOO pre-market display from prices.json');
+ok(parsePricesJson(null) === null && parsePricesJson({}) === null,
+  'empty prices.json doc returns null');
+ok(parsePricesJson({ quotes: { SOXL: { price: 1 } } }).quotes.SOXL.price === 1,
+  'partial prices.json still yields the symbols it has');
+ok(html.includes('./prices.json') && html.indexOf('fetchPricesJson()') < html.indexOf('fetchWithTimeout(YAHOO_URL'),
+  'prices.json is tried before the Yahoo browser sources');
+const livePrices = JSON.parse(fs.readFileSync(__dirname + '/prices.json', 'utf8'));
+ok(livePrices.quotes && Object.keys(livePrices.quotes).length === 4 && livePrices.updated,
+  'prices.json on disk has all 4 symbols and an updated stamp');
 
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

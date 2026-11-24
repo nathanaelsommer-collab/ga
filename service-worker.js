@@ -1,6 +1,6 @@
 /* GA service worker — offline-first app shell.
  * Bump CACHE_VERSION to force clients onto a fresh cache. */
-const CACHE_VERSION = "ga-v19";
+const CACHE_VERSION = "ga-v20";
 const ASSETS = ["./", "./index.html", "./manifest.json", "./favicon.svg"];
 
 self.addEventListener("install", (event) => {
@@ -25,8 +25,9 @@ self.addEventListener("activate", (event) => {
 
 self.addEventListener("fetch", (event) => {
   if (event.request.method !== "GET") return;
-  // data.json is the live sync feed — never serve it from cache.
-  if (event.request.url.indexOf("data.json") !== -1) {
+  // data.json and prices.json are live feeds — never serve them from cache.
+  if (event.request.url.indexOf("data.json") !== -1 ||
+      event.request.url.indexOf("prices.json") !== -1) {
     event.respondWith(fetch(event.request));
     return;
   }
